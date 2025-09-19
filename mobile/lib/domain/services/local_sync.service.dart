@@ -371,6 +371,7 @@ extension PlatformToLocalAsset on PlatformAsset {
     type: AssetType.values.elementAtOrNull(type) ?? AssetType.other,
     createdAt: tryFromSecondsSinceEpoch(createdAt, isUtc: true) ?? DateTime.timestamp(),
     updatedAt: tryFromSecondsSinceEpoch(updatedAt, isUtc: true) ?? DateTime.timestamp(),
+    adjustmentTimestamp: adjustmentTimestamp,
     width: width,
     height: height,
     durationInSeconds: durationInSeconds,

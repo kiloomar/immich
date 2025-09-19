@@ -4,6 +4,7 @@ class LocalAsset extends BaseAsset {
   final String id;
   final String? remoteAssetId;
   final int orientation;
+  final int? adjustmentTimestamp;
 
   const LocalAsset({
     required this.id,
@@ -19,6 +20,7 @@ class LocalAsset extends BaseAsset {
     super.isFavorite = false,
     super.livePhotoVideoId,
     this.orientation = 0,
+    this.adjustmentTimestamp,
   }) : remoteAssetId = remoteId;
 
   @override
@@ -47,6 +49,7 @@ class LocalAsset extends BaseAsset {
    remoteId: ${remoteId ?? "<NA>"}
    isFavorite: $isFavorite,
   orientation: $orientation,
+  adjustmentTimestamp: ${adjustmentTimestamp ?? "<NA>"}
  }''';
   }
 
@@ -55,11 +58,15 @@ class LocalAsset extends BaseAsset {
   bool operator ==(Object other) {
     if (other is! LocalAsset) return false;
     if (identical(this, other)) return true;
-    return super == other && id == other.id && orientation == other.orientation;
+    return super == other &&
+        id == other.id &&
+        orientation == other.orientation &&
+        adjustmentTimestamp == other.adjustmentTimestamp;
   }
 
   @override
-  int get hashCode => super.hashCode ^ id.hashCode ^ remoteId.hashCode ^ orientation.hashCode;
+  int get hashCode =>
+      super.hashCode ^ id.hashCode ^ remoteId.hashCode ^ orientation.hashCode ^ adjustmentTimestamp.hashCode;
 
   LocalAsset copyWith({
     String? id,
@@ -74,6 +81,7 @@ class LocalAsset extends BaseAsset {
     int? durationInSeconds,
     bool? isFavorite,
     int? orientation,
+    int? adjustmentTimestamp,
   }) {
     return LocalAsset(
       id: id ?? this.id,
@@ -88,6 +96,7 @@ class LocalAsset extends BaseAsset {
       durationInSeconds: durationInSeconds ?? this.durationInSeconds,
       isFavorite: isFavorite ?? this.isFavorite,
       orientation: orientation ?? this.orientation,
+      adjustmentTimestamp: adjustmentTimestamp ?? this.adjustmentTimestamp,
     );
   }
 }
