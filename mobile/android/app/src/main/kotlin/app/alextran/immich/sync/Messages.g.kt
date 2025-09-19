@@ -89,7 +89,8 @@ data class PlatformAsset (
   val height: Long? = null,
   val durationInSeconds: Long,
   val orientation: Long,
-  val isFavorite: Boolean
+  val isFavorite: Boolean,
+  val adjustmentTimestamp: Long? = null
 )
  {
   companion object {
@@ -104,7 +105,8 @@ data class PlatformAsset (
       val durationInSeconds = pigeonVar_list[7] as Long
       val orientation = pigeonVar_list[8] as Long
       val isFavorite = pigeonVar_list[9] as Boolean
-      return PlatformAsset(id, name, type, createdAt, updatedAt, width, height, durationInSeconds, orientation, isFavorite)
+      val adjustmentTimestamp = pigeonVar_list[10] as Long?
+      return PlatformAsset(id, name, type, createdAt, updatedAt, width, height, durationInSeconds, orientation, isFavorite, adjustmentTimestamp)
     }
   }
   fun toList(): List<Any?> {
@@ -119,6 +121,7 @@ data class PlatformAsset (
       durationInSeconds,
       orientation,
       isFavorite,
+      adjustmentTimestamp,
     )
   }
   override fun equals(other: Any?): Boolean {

@@ -26,6 +26,7 @@ class PlatformAsset {
   final int durationInSeconds;
   final int orientation;
   final bool isFavorite;
+  final int? adjustmentTimestamp;
 
   const PlatformAsset({
     required this.id,
@@ -38,6 +39,7 @@ class PlatformAsset {
     this.durationInSeconds = 0,
     this.orientation = 0,
     this.isFavorite = false,
+    this.adjustmentTimestamp,
   });
 }
 

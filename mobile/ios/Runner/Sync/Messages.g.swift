@@ -140,6 +140,7 @@ struct PlatformAsset: Hashable {
   var durationInSeconds: Int64
   var orientation: Int64
   var isFavorite: Bool
+  var adjustmentTimestamp: Int64? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -154,6 +155,7 @@ struct PlatformAsset: Hashable {
     let durationInSeconds = pigeonVar_list[7] as! Int64
     let orientation = pigeonVar_list[8] as! Int64
     let isFavorite = pigeonVar_list[9] as! Bool
+    let adjustmentTimestamp: Int64? = nilOrValue(pigeonVar_list[10])
 
     return PlatformAsset(
       id: id,
@@ -165,7 +167,8 @@ struct PlatformAsset: Hashable {
       height: height,
       durationInSeconds: durationInSeconds,
       orientation: orientation,
-      isFavorite: isFavorite
+      isFavorite: isFavorite,
+      adjustmentTimestamp: adjustmentTimestamp
     )
   }
   func toList() -> [Any?] {
@@ -180,6 +183,7 @@ struct PlatformAsset: Hashable {
       durationInSeconds,
       orientation,
       isFavorite,
+      adjustmentTimestamp,
     ]
   }
   static func == (lhs: PlatformAsset, rhs: PlatformAsset) -> Bool {

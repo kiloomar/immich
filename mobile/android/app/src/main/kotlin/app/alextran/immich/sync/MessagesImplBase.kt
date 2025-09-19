@@ -155,6 +155,7 @@ open class NativeSyncApiImplBase(context: Context) : ImmichPlugin() {
             duration,
             orientation.toLong(),
             isFavorite,
+            adjustmentTimestamp = null
           )
           yield(AssetResult.ValidAsset(asset, bucketId))
         }

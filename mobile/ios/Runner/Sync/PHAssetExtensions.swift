@@ -12,7 +12,8 @@ extension PHAsset {
       height: Int64(pixelHeight),
       durationInSeconds: Int64(duration),
       orientation: 0,
-      isFavorite: isFavorite
+      isFavorite: isFavorite,
+      adjustmentTimestamp: adjustmentTimestamp
     )
   }
 
@@ -22,6 +23,10 @@ extension PHAsset {
 
   var filename: String? {
     return value(forKey: "filename") as? String
+  }
+  
+  var adjustmentTimestamp: Int64 {
+    return (value(forKey: "adjustmentTimestamp") as? Date?).map( {Int64($0?.timeIntervalSince1970 ?? 0)} ) ?? 0
   }
 
   // This method is expected to be slow as it goes through the asset resources to fetch the originalFilename
