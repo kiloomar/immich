@@ -27,7 +27,30 @@
   import type { UpdatePayload } from 'vite';
   import TimelineDateGroup from './TimelineDateGroup.svelte';
 
+  // const [send, receive] = crossfade({
+  //   duration: (d) => Math.sqrt(d * 200),
+  //   fallback(node) {
+  //     const style = getComputedStyle(node);
+  //     const transform = style.transform === 'none' ? '' : style.transform;
+
+  //     return {
+  //       duration: 600,
+  //       easing: quintOut,
+  //       css: (t) => `
+  // 			transform: ${transform} scale(${t});
+  // 			opacity: ${t}
+  // 		`,
+  //     };
+  //   },
+  // });
+  // console.log('hi', send, typeof receive);
+  export type Something = {
+    send: any;
+    receive: any;
+  };
+
   interface Props {
+    shared: Something;
     isSelectionMode?: boolean;
     singleSelect?: boolean;
     /** `true` if this asset grid is responds to navigation events; if `true`, then look at the
@@ -69,6 +92,10 @@
   }
 
   let {
+    shared = {
+      send: () => void 0,
+      receive: () => void 0,
+    },
     isSelectionMode = false,
     singleSelect = false,
     enableRouting,
@@ -206,6 +233,7 @@
   };
 
   export const scrollAfterNavigate = async () => {
+    debugger;
     if (timelineManager.viewportHeight === 0 || timelineManager.viewportWidth === 0) {
       // this can happen if you do the following navigation order
       // /photos?at=<id>, /photos/<id>, http://example.com, browser back, browser back
@@ -222,7 +250,7 @@
     }
     if (!scrolled) {
       // if the asset is not found, scroll to the top
-      timelineManager.scrollTo(0);
+      // timelineManager.scrollTo(0);
     }
     invisible = false;
   };
@@ -650,6 +678,7 @@
           style:width="100%"
         >
           <TimelineDateGroup
+            {shared}
             {withStacked}
             {showArchiveIcon}
             {assetInteraction}
@@ -679,7 +708,16 @@
 
 <Portal target="body">
   {#if $showAssetViewer}
-    <TimelineAssetViewer bind:invisible {timelineManager} {removeAction} {withStacked} {isShared} {album} {person} />
+    <TimelineAssetViewer
+      {shared}
+      bind:invisible
+      {timelineManager}
+      {removeAction}
+      {withStacked}
+      {isShared}
+      {album}
+      {person}
+    />
   {/if}
 </Portal>
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Action } from '$lib/components/asset-viewer/actions/action';
+  import type { Something } from '$lib/components/timeline/Timeline.svelte';
   import { AssetAction } from '$lib/constants';
   import { authManager } from '$lib/managers/auth-manager.svelte';
   import { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
@@ -12,6 +13,7 @@
   let { asset: viewingAsset, gridScrollTarget, mutex, preloadAssets } = assetViewingStore;
 
   interface Props {
+    shared: Something;
     timelineManager: TimelineManager;
     invisible: boolean;
     withStacked?: boolean;
@@ -29,6 +31,7 @@
   }
 
   let {
+    shared,
     timelineManager,
     invisible = $bindable(false),
     removeAction,
@@ -167,6 +170,7 @@
 
 {#await import('$lib/components/asset-viewer/asset-viewer.svelte') then { default: AssetViewer }}
   <AssetViewer
+    shared
     {withStacked}
     asset={$viewingAsset}
     preloadAssets={$preloadAssets}

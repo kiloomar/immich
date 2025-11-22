@@ -1,5 +1,6 @@
 <script lang="ts">
   import Thumbnail from '$lib/components/assets/thumbnail/thumbnail.svelte';
+  import type { Something } from '$lib/components/timeline/Timeline.svelte';
   import type { DayGroup } from '$lib/managers/timeline-manager/day-group.svelte';
   import type { MonthGroup } from '$lib/managers/timeline-manager/month-group.svelte';
   import { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
@@ -9,18 +10,16 @@
   import { isSelectingAllAssets } from '$lib/stores/assets-store.svelte';
   import { uploadAssetsStore } from '$lib/stores/upload';
   import { navigate } from '$lib/utils/navigation';
-
-  import { mdiCheckCircle, mdiCircleOutline } from '@mdi/js';
-
   import { fromTimelinePlainDate, getDateLocaleString } from '$lib/utils/timeline-util';
   import { Icon } from '@immich/ui';
+  import { mdiCheckCircle, mdiCircleOutline } from '@mdi/js';
   import { type Snippet } from 'svelte';
   import { flip } from 'svelte/animate';
-  import { scale } from 'svelte/transition';
 
   let { isUploading } = uploadAssetsStore;
 
   interface Props {
+    shared: Something;
     isSelectionMode: boolean;
     singleSelect: boolean;
     withStacked: boolean;
@@ -47,6 +46,7 @@
   }
 
   let {
+    shared,
     isSelectionMode,
     singleSelect,
     withStacked,
@@ -64,6 +64,7 @@
 
   let isMouseOverGroup = $state(false);
   let hoveredDayGroup = $state();
+  const send = shared.send;
 
   const transitionDuration = $derived.by(() =>
     monthGroup.timelineManager.suspendTransitions && !$isUploading ? 0 : 150,
@@ -202,8 +203,8 @@
           style:left={position.left + 'px'}
           style:width={position.width + 'px'}
           style:height={position.height + 'px'}
-          out:scale|global={{ start: 0.1, duration: scaleDuration }}
           animate:flip={{ duration: transitionDuration }}
+          out:send={{ key: asset.id }}
         >
           <Thumbnail
             showStackedIcon={withStacked}
@@ -226,6 +227,7 @@
             thumbnailWidth={position.width}
             thumbnailHeight={position.height}
           />
+
           {#if customLayout}
             {@render customLayout(asset)}
           {/if}

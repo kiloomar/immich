@@ -194,6 +194,7 @@
     imageLoaded = true;
     assetFileUrl = imageLoaderUrl;
     originalImageLoaded = targetImageSize === AssetMediaSize.Fullsize || targetImageSize === 'original';
+    console.log('load', imageLoaderUrl, imageLoaded);
   };
 
   const onerror = () => {
@@ -239,6 +240,7 @@
 {/if}
 <!-- svelte-ignore a11y_missing_attribute -->
 <img bind:this={loader} style="display:none" src={imageLoaderUrl} aria-hidden="true" />
+
 <div
   bind:this={element}
   class="relative h-full select-none"
@@ -246,6 +248,7 @@
   bind:clientHeight={containerHeight}
 >
   <img style="display:none" src={imageLoaderUrl} alt="" {onload} {onerror} />
+
   {#if !imageLoaded}
     <div id="spinner" class="flex h-full items-center justify-center">
       <LoadingSpinner />

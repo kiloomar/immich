@@ -7,6 +7,7 @@
   import PreviousAssetAction from '$lib/components/asset-viewer/actions/previous-asset-action.svelte';
   import AssetViewerNavBar from '$lib/components/asset-viewer/asset-viewer-nav-bar.svelte';
   import OnEvents from '$lib/components/OnEvents.svelte';
+  import type { Something } from '$lib/components/timeline/Timeline.svelte';
   import { AppRoute, AssetAction, ProjectionType } from '$lib/constants';
   import { activityManager } from '$lib/managers/activity-manager.svelte';
   import { authManager } from '$lib/managers/auth-manager.svelte';
@@ -53,6 +54,7 @@
   type HasAsset = boolean;
 
   interface Props {
+    shared: Something;
     asset: AssetResponseDto;
     preloadAssets?: TimelineAsset[];
     showNavigation?: boolean;
@@ -71,6 +73,7 @@
   }
 
   let {
+    shared,
     asset = $bindable(),
     preloadAssets = $bindable([]),
     showNavigation = true,
@@ -88,7 +91,7 @@
     copyImage = $bindable(),
   }: Props = $props();
 
-  const { setAssetId } = assetViewingStore;
+  const { setAssetId, invisible } = assetViewingStore;
   const {
     restartProgress: restartSlideshowProgress,
     stopProgress: stopSlideshowProgress,
@@ -412,6 +415,7 @@
 <section
   id="immich-asset-viewer"
   class="fixed start-0 top-0 grid size-full grid-cols-4 grid-rows-[64px_1fr] overflow-hidden bg-black"
+  class:invisible={$invisible}
   use:focusTrap
   bind:this={assetViewerHtmlElement}
 >
@@ -466,103 +470,105 @@
   {/if}
 
   <!-- Asset Viewer -->
-  <div class="z-[-1] relative col-start-1 col-span-4 row-start-1 row-span-full">
-    {#if previewStackedAsset}
-      {#key previewStackedAsset.id}
-        {#if previewStackedAsset.type === AssetTypeEnum.Image}
-          <PhotoViewer
-            bind:zoomToggle
-            bind:copyImage
-            asset={previewStackedAsset}
-            {preloadAssets}
-            onPreviousAsset={() => navigateAsset('previous')}
-            onNextAsset={() => navigateAsset('next')}
-            haveFadeTransition={false}
-            {sharedLink}
-          />
-        {:else}
-          <VideoViewer
-            assetId={previewStackedAsset.id}
-            cacheKey={previewStackedAsset.thumbhash}
-            projectionType={previewStackedAsset.exifInfo?.projectionType}
-            loopVideo={true}
-            onPreviousAsset={() => navigateAsset('previous')}
-            onNextAsset={() => navigateAsset('next')}
-            onClose={closeViewer}
-            onVideoEnded={() => navigateAsset()}
-            onVideoStarted={handleVideoStarted}
-            {playOriginalVideo}
-          />
-        {/if}
-      {/key}
-    {:else}
-      {#key asset.id}
-        {#if asset.type === AssetTypeEnum.Image}
-          {#if shouldPlayMotionPhoto && asset.livePhotoVideoId}
+  {#key asset.id}
+    <div class="z-[-1] relative col-start-1 col-span-4 row-start-1 row-span-full">
+      {#if previewStackedAsset}
+        {#key previewStackedAsset.id}
+          {#if previewStackedAsset.type === AssetTypeEnum.Image}
+            <PhotoViewer
+              bind:zoomToggle
+              bind:copyImage
+              asset={previewStackedAsset}
+              {preloadAssets}
+              onPreviousAsset={() => navigateAsset('previous')}
+              onNextAsset={() => navigateAsset('next')}
+              haveFadeTransition={false}
+              {sharedLink}
+            />
+          {:else}
             <VideoViewer
-              assetId={asset.livePhotoVideoId}
+              assetId={previewStackedAsset.id}
+              cacheKey={previewStackedAsset.thumbhash}
+              projectionType={previewStackedAsset.exifInfo?.projectionType}
+              loopVideo={true}
+              onPreviousAsset={() => navigateAsset('previous')}
+              onNextAsset={() => navigateAsset('next')}
+              onClose={closeViewer}
+              onVideoEnded={() => navigateAsset()}
+              onVideoStarted={handleVideoStarted}
+              {playOriginalVideo}
+            />
+          {/if}
+        {/key}
+      {:else}
+        {#key asset.id}
+          {#if asset.type === AssetTypeEnum.Image}
+            {#if shouldPlayMotionPhoto && asset.livePhotoVideoId}
+              <VideoViewer
+                assetId={asset.livePhotoVideoId}
+                cacheKey={asset.thumbhash}
+                projectionType={asset.exifInfo?.projectionType}
+                loopVideo={$slideshowState !== SlideshowState.PlaySlideshow}
+                onPreviousAsset={() => navigateAsset('previous')}
+                onNextAsset={() => navigateAsset('next')}
+                onVideoEnded={() => (shouldPlayMotionPhoto = false)}
+                {playOriginalVideo}
+              />
+            {:else if asset.exifInfo?.projectionType === ProjectionType.EQUIRECTANGULAR || (asset.originalPath && asset.originalPath
+                  .toLowerCase()
+                  .endsWith('.insp'))}
+              <ImagePanoramaViewer {asset} />
+            {:else if isShowEditor && selectedEditType === 'crop'}
+              <CropArea {asset} />
+            {:else}
+              <PhotoViewer
+                bind:zoomToggle
+                bind:copyImage
+                {asset}
+                {preloadAssets}
+                onPreviousAsset={() => navigateAsset('previous')}
+                onNextAsset={() => navigateAsset('next')}
+                {sharedLink}
+                haveFadeTransition={$slideshowState !== SlideshowState.None && $slideshowTransition}
+              />
+            {/if}
+          {:else}
+            <VideoViewer
+              assetId={asset.id}
               cacheKey={asset.thumbhash}
               projectionType={asset.exifInfo?.projectionType}
               loopVideo={$slideshowState !== SlideshowState.PlaySlideshow}
               onPreviousAsset={() => navigateAsset('previous')}
               onNextAsset={() => navigateAsset('next')}
-              onVideoEnded={() => (shouldPlayMotionPhoto = false)}
+              onClose={closeViewer}
+              onVideoEnded={() => navigateAsset()}
+              onVideoStarted={handleVideoStarted}
               {playOriginalVideo}
             />
-          {:else if asset.exifInfo?.projectionType === ProjectionType.EQUIRECTANGULAR || (asset.originalPath && asset.originalPath
-                .toLowerCase()
-                .endsWith('.insp'))}
-            <ImagePanoramaViewer {asset} />
-          {:else if isShowEditor && selectedEditType === 'crop'}
-            <CropArea {asset} />
-          {:else}
-            <PhotoViewer
-              bind:zoomToggle
-              bind:copyImage
-              {asset}
-              {preloadAssets}
-              onPreviousAsset={() => navigateAsset('previous')}
-              onNextAsset={() => navigateAsset('next')}
-              {sharedLink}
-              haveFadeTransition={$slideshowState !== SlideshowState.None && $slideshowTransition}
-            />
           {/if}
-        {:else}
-          <VideoViewer
-            assetId={asset.id}
-            cacheKey={asset.thumbhash}
-            projectionType={asset.exifInfo?.projectionType}
-            loopVideo={$slideshowState !== SlideshowState.PlaySlideshow}
-            onPreviousAsset={() => navigateAsset('previous')}
-            onNextAsset={() => navigateAsset('next')}
-            onClose={closeViewer}
-            onVideoEnded={() => navigateAsset()}
-            onVideoStarted={handleVideoStarted}
-            {playOriginalVideo}
-          />
-        {/if}
 
-        {#if $slideshowState === SlideshowState.None && isShared && ((album && album.isActivityEnabled) || activityManager.commentCount > 0) && !activityManager.isLoading}
-          <div class="absolute bottom-0 end-0 mb-20 me-8">
-            <ActivityStatus
-              disabled={!album?.isActivityEnabled}
-              isLiked={activityManager.isLiked}
-              numberOfComments={activityManager.commentCount}
-              numberOfLikes={activityManager.likeCount}
-              onFavorite={handleFavorite}
-              onOpenActivityTab={handleOpenActivity}
-            />
-          </div>
-        {/if}
+          {#if $slideshowState === SlideshowState.None && isShared && ((album && album.isActivityEnabled) || activityManager.commentCount > 0) && !activityManager.isLoading}
+            <div class="absolute bottom-0 end-0 mb-20 me-8">
+              <ActivityStatus
+                disabled={!album?.isActivityEnabled}
+                isLiked={activityManager.isLiked}
+                numberOfComments={activityManager.commentCount}
+                numberOfLikes={activityManager.likeCount}
+                onFavorite={handleFavorite}
+                onOpenActivityTab={handleOpenActivity}
+              />
+            </div>
+          {/if}
 
-        {#if $slideshowState === SlideshowState.None && asset.type === AssetTypeEnum.Image && !isShowEditor && ocrManager.hasOcrData}
-          <div class="absolute bottom-0 end-0 mb-6 me-6">
-            <OcrButton />
-          </div>
-        {/if}
-      {/key}
-    {/if}
-  </div>
+          {#if $slideshowState === SlideshowState.None && asset.type === AssetTypeEnum.Image && !isShowEditor && ocrManager.hasOcrData}
+            <div class="absolute bottom-0 end-0 mb-6 me-6">
+              <OcrButton />
+            </div>
+          {/if}
+        {/key}
+      {/if}
+    </div>
+  {/key}
 
   {#if $slideshowState === SlideshowState.None && showNavigation && !isShowEditor}
     <div class="my-auto col-span-1 col-start-4 row-span-full row-start-1 justify-self-end">
