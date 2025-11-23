@@ -23,8 +23,9 @@
   import { onMount, type Snippet } from 'svelte';
   import { t } from 'svelte-i18n';
   import { run } from 'svelte/legacy';
+  import { setupViewTransition } from 'sveltekit-view-transition';
   import '../app.css';
-
+  setupViewTransition();
   interface Props {
     children?: Snippet;
   }
