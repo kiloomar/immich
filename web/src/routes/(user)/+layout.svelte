@@ -1,8 +1,8 @@
 <script lang="ts">
   import { run } from 'svelte/legacy';
 
-  import UploadCover from '$lib/components/shared-components/drag-and-drop-upload-overlay.svelte';
   import { page } from '$app/stores';
+  import UploadCover from '$lib/components/shared-components/drag-and-drop-upload-overlay.svelte';
 
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
   import type { Snippet } from 'svelte';
@@ -26,7 +26,7 @@
   });
 </script>
 
-<div class:display-none={$showAssetViewer}>
+<div>
   {@render children?.()}
 </div>
 <UploadCover />

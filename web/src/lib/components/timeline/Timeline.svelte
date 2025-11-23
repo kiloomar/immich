@@ -9,6 +9,7 @@
   import HotModuleReload from '$lib/elements/HotModuleReload.svelte';
   import Portal from '$lib/elements/Portal.svelte';
   import Skeleton from '$lib/elements/Skeleton.svelte';
+  import { eventManager } from '$lib/managers/event-manager.svelte';
   import type { DayGroup } from '$lib/managers/timeline-manager/day-group.svelte';
   import { isIntersecting } from '$lib/managers/timeline-manager/internal/intersection-support.svelte';
   import type { MonthGroup } from '$lib/managers/timeline-manager/month-group.svelte';
@@ -23,11 +24,34 @@
   import { getTimes, type ScrubberListener } from '$lib/utils/timeline-util';
   import { type AlbumResponseDto, type PersonResponseDto } from '@immich/sdk';
   import { DateTime } from 'luxon';
-  import { onDestroy, onMount, type Snippet } from 'svelte';
+  import { onDestroy, onMount, tick, type Snippet } from 'svelte';
   import type { UpdatePayload } from 'vite';
   import TimelineDateGroup from './TimelineDateGroup.svelte';
 
+  // const [send, receive] = crossfade({
+  //   duration: (d) => Math.sqrt(d * 200),
+  //   fallback(node) {
+  //     const style = getComputedStyle(node);
+  //     const transform = style.transform === 'none' ? '' : style.transform;
+
+  //     return {
+  //       duration: 600,
+  //       easing: quintOut,
+  //       css: (t) => `
+  // 			transform: ${transform} scale(${t});
+  // 			opacity: ${t}
+  // 		`,
+  //     };
+  //   },
+  // });
+  // console.log('hi', send, typeof receive);
+  export type Something = {
+    send: any;
+    receive: any;
+  };
+
   interface Props {
+    shared: Something;
     isSelectionMode?: boolean;
     singleSelect?: boolean;
     /** `true` if this asset grid is responds to navigation events; if `true`, then look at the
@@ -69,6 +93,10 @@
   }
 
   let {
+    shared = {
+      send: () => void 0,
+      receive: () => void 0,
+    },
     isSelectionMode = false,
     singleSelect = false,
     enableRouting,
@@ -220,9 +248,10 @@
     if (scrollTarget) {
       scrolled = await scrollAndLoadAsset(scrollTarget);
     }
+
     if (!scrolled) {
       // if the asset is not found, scroll to the top
-      timelineManager.scrollTo(0);
+      // timelineManager.scrollTo(0);
     }
     invisible = false;
   };
@@ -236,16 +265,41 @@
   // and a new route is being navigated to. It will never be called on direct
   // navigations by the browser.
   beforeNavigate(({ from, to }) => {
+    eventManager.on('asdf', () => void 0);
     timelineManager.suspendTransitions = true;
     const isNavigatingToAssetViewer = isAssetViewerRoute(to);
     const isNavigatingFromAssetViewer = isAssetViewerRoute(from);
     hasNavigatedToOrFromAssetViewer = isNavigatingToAssetViewer !== isNavigatingFromAssetViewer;
+    if (!isNavigatingFromAssetViewer && isNavigatingToAssetViewer) {
+      const navigatingPromise = new Promise((resolve) => {
+        console.log('hi');
+        eventManager.once('AssetViewerLoaded', () => {
+          resolve();
+        });
+
+        console.log('BEFORE VIEW TRANS');
+        const transition = document.startViewTransition(async () => {
+          console.log('IN VIEW TRANS');
+          console.log('emit', 'StartViewTransition');
+          eventManager.emit('StartViewTransition');
+          console.log('starting');
+
+          await navigatingPromise;
+          console.log('AFTER VIEW TRANS!');
+        });
+        transition.updateCallbackDone.then(() => {
+          console.log('DONE VIEW TRANS!');
+          eventManager.emit('EndViewTransition');
+        });
+      });
+    } else if (isNavigatingFromAssetViewer && isNavigatingToAssetViewer) {
+    }
   });
 
   // afterNavigate is only called after navigation to a new URL, {complete} will resolve
   // after successful navigation.
   afterNavigate(({ complete }) => {
-    void complete.finally(() => {
+    void complete.finally(async () => {
       const isAssetViewerPage = isAssetViewerRoute(page);
 
       // Set initial load state only once - if initialLoadWasAssetViewer is null, then
@@ -256,6 +310,11 @@
       }
 
       void scrollAfterNavigate();
+      if (!isAssetViewerPage) {
+        const scrollTarget = $gridScrollTarget?.at;
+        await tick();
+        eventManager.emit('TimelineLoaded', scrollTarget);
+      }
     });
   });
 
@@ -650,6 +709,7 @@
           style:width="100%"
         >
           <TimelineDateGroup
+            {shared}
             {withStacked}
             {showArchiveIcon}
             {assetInteraction}
@@ -679,7 +739,16 @@
 
 <Portal target="body">
   {#if $showAssetViewer}
-    <TimelineAssetViewer bind:invisible {timelineManager} {removeAction} {withStacked} {isShared} {album} {person} />
+    <TimelineAssetViewer
+      {shared}
+      bind:invisible
+      {timelineManager}
+      {removeAction}
+      {withStacked}
+      {isShared}
+      {album}
+      {person}
+    />
   {/if}
 </Portal>
 

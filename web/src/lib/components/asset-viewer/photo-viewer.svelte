@@ -6,6 +6,7 @@
   import BrokenAsset from '$lib/components/assets/broken-asset.svelte';
   import { assetViewerFadeDuration } from '$lib/constants';
   import { castManager } from '$lib/managers/cast-manager.svelte';
+  import { eventManager } from '$lib/managers/event-manager.svelte';
   import type { TimelineAsset } from '$lib/managers/timeline-manager/types';
   import { photoViewerImgElement } from '$lib/stores/assets-store.svelte';
   import { isFaceEditMode } from '$lib/stores/face-edit.svelte';
@@ -194,6 +195,8 @@
     imageLoaded = true;
     assetFileUrl = imageLoaderUrl;
     originalImageLoaded = targetImageSize === AssetMediaSize.Fullsize || targetImageSize === 'original';
+    console.log('load', imageLoaderUrl, imageLoaded);
+    eventManager.emit('loaded');
   };
 
   const onerror = () => {
@@ -239,6 +242,7 @@
 {/if}
 <!-- svelte-ignore a11y_missing_attribute -->
 <img bind:this={loader} style="display:none" src={imageLoaderUrl} aria-hidden="true" />
+
 <div
   bind:this={element}
   class="relative h-full select-none"
@@ -246,6 +250,7 @@
   bind:clientHeight={containerHeight}
 >
   <img style="display:none" src={imageLoaderUrl} alt="" {onload} {onerror} />
+
   {#if !imageLoaded}
     <div id="spinner" class="flex h-full items-center justify-center">
       <LoadingSpinner />

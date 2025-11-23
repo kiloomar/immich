@@ -1,26 +1,27 @@
 <script lang="ts">
   import Thumbnail from '$lib/components/assets/thumbnail/thumbnail.svelte';
+  import type { Something } from '$lib/components/timeline/Timeline.svelte';
+  import { eventManager } from '$lib/managers/event-manager.svelte';
   import type { DayGroup } from '$lib/managers/timeline-manager/day-group.svelte';
   import type { MonthGroup } from '$lib/managers/timeline-manager/month-group.svelte';
   import { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
   import type { TimelineAsset } from '$lib/managers/timeline-manager/types';
   import { assetSnapshot, assetsSnapshot } from '$lib/managers/timeline-manager/utils.svelte';
   import type { AssetInteraction } from '$lib/stores/asset-interaction.svelte';
+  import { assetViewingStore } from '$lib/stores/asset-viewing.store';
   import { isSelectingAllAssets } from '$lib/stores/assets-store.svelte';
   import { uploadAssetsStore } from '$lib/stores/upload';
   import { navigate } from '$lib/utils/navigation';
-
-  import { mdiCheckCircle, mdiCircleOutline } from '@mdi/js';
-
   import { fromTimelinePlainDate, getDateLocaleString } from '$lib/utils/timeline-util';
   import { Icon } from '@immich/ui';
+  import { mdiCheckCircle, mdiCircleOutline } from '@mdi/js';
   import { type Snippet } from 'svelte';
-  import { flip } from 'svelte/animate';
-  import { scale } from 'svelte/transition';
 
   let { isUploading } = uploadAssetsStore;
+  let { isViewing: showAssetViewer } = assetViewingStore;
 
   interface Props {
+    shared: Something;
     isSelectionMode: boolean;
     singleSelect: boolean;
     withStacked: boolean;
@@ -47,6 +48,7 @@
   }
 
   let {
+    shared,
     isSelectionMode,
     singleSelect,
     withStacked,
@@ -64,6 +66,9 @@
 
   let isMouseOverGroup = $state(false);
   let hoveredDayGroup = $state();
+  const send = shared.send;
+
+  let clickedThumb = $state<string | null>(null);
 
   const transitionDuration = $derived.by(() =>
     monthGroup.timelineManager.suspendTransitions && !$isUploading ? 0 : 150,
@@ -133,6 +138,37 @@
     });
     return getDateLocaleString(date);
   };
+  let animateTarget = $state<string | null>(null);
+  $inspect(clickedThumb).with((a, b) => console.log('clicked', a, b));
+  $inspect(animateTarget).with((a, b) => console.log('clicked', a, b));
+
+  eventManager.on('BackToTimeline', async ({ assetId }) => {
+    const asset = await monthGroup.findAssetById({ id: assetId });
+    if (!asset) {
+      return;
+    }
+    console.log('BACK TO TIMLEINE');
+
+    debugger;
+    const navigatingPromise = new Promise((resolve) => {
+      eventManager.once('TimelineLoaded', (assetId) => {
+        console.log('timeline loaded', assetId);
+        animateTarget = assetId;
+        resolve();
+      });
+      console.log('hi');
+      const transition = document.startViewTransition(async () => {
+        console.log('start view transition - 2');
+        eventManager.emit('StartViewTransition');
+        console.log('starting2');
+        eventManager.emit('WaitForInit');
+        await navigatingPromise;
+        console.log('AFTER VIEW TRANS - 2!');
+        debugger;
+      });
+      transition.updateCallbackDone.then(() => ((animateTarget = null), eventManager.emit('EndViewTransition')));
+    });
+  });
 </script>
 
 {#each filterIntersecting(monthGroup.dayGroups) as dayGroup, groupIndex (dayGroup.day)}
@@ -192,25 +228,34 @@
       {#each filterIntersecting(dayGroup.viewerAssets) as viewerAsset (viewerAsset.id)}
         {@const position = viewerAsset.position!}
         {@const asset = viewerAsset.asset!}
+        {@const transitionName = clickedThumb === asset.id || animateTarget === asset.id ? 'good' : undefined}
 
         <!-- {#if viewerAsset.intersecting} -->
         <!-- note: don't remove data-asset-id - its used by web e2e tests -->
         <div
           data-asset-id={asset.id}
+          data-transition-thumb={clickedThumb === asset.id || animateTarget === asset.id ? true : undefined}
+          style:view-transition-name={transitionName}
           class="absolute"
           style:top={position.top + 'px'}
           style:left={position.left + 'px'}
           style:width={position.width + 'px'}
           style:height={position.height + 'px'}
-          out:scale|global={{ start: 0.1, duration: scaleDuration }}
-          animate:flip={{ duration: transitionDuration }}
         >
+          <!--  out:send={{ key: asset.id }} -->
           <Thumbnail
             showStackedIcon={withStacked}
             {showArchiveIcon}
             {asset}
             {groupIndex}
-            onClick={(asset) => {
+            onClick={async (asset) => {
+              console.log('adding clickedThumb', asset.id);
+              clickedThumb = asset.id;
+              eventManager.once('StartViewTransition', () => {
+                console.log('removing clickedThumb');
+                clickedThumb = null;
+              });
+
               if (typeof onThumbnailClick === 'function') {
                 onThumbnailClick(asset, timelineManager, dayGroup, _onClick);
               } else {
@@ -226,6 +271,7 @@
             thumbnailWidth={position.width}
             thumbnailHeight={position.height}
           />
+
           {#if customLayout}
             {@render customLayout(asset)}
           {/if}
@@ -242,5 +288,134 @@
   }
   [data-image-grid] {
     user-select: none;
+  }
+  /* :global(::view-transition-new(header-f5744a65-5cd4-41d7-a3d9-5609e7ccefaf)) {
+    animation: itemsLinkIn 0.3s;
+  } */
+
+  :global(::view-transition-group(*)) {
+    animation-duration: 260ms;
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  :global(::view-transition-old(*)),
+  :global(::view-transition-new(*)) {
+    mix-blend-mode: normal;
+  }
+
+  :global(::view-transition-old(root)) {
+    animation: 250ms ease-in 0s fadeOut forwards;
+    z-index: 1000;
+  }
+  :global(::view-transition-new(root)) {
+    animation: 250ms ease-in 0s fadeIn forwards;
+  }
+  :global(::view-transition-old(info)) {
+    animation: 250ms ease-in 0s flyOutRight forwards;
+    z-index: 1000;
+  }
+  :global(::view-transition-new(info)) {
+    animation: 250ms ease-in 0s flyInRight forwards;
+  }
+
+  :global(::view-transition-old(*)) {
+    /* z-index: 10000; */
+    animation: 350ms fadeOut;
+  }
+  :global(::view-transition-new(*)) {
+    animation: 350ms fadeIn;
+  }
+  :global(::view-transition-old(good)) {
+    z-index: 10000;
+    animation: 350ms fadeIn;
+    display: flex;
+    align-content: center;
+  }
+  :global(::view-transition-new(good)) {
+    animation: 350ms fadeIn;
+    display: flex;
+    align-content: center;
+  }
+
+  :global(::view-transition-old(next)) {
+    /* z-index: 10000; */
+    animation: 350ms flyOutLeft;
+    transform-origin: center;
+  }
+  :global(::view-transition-new(next)) {
+    animation: 350ms flyInRight;
+    transform-origin: center;
+  }
+
+  :global(::view-transition-old(previous)) {
+    /* z-index: 10000; */
+    animation: 350ms flyOutRight;
+    transform-origin: center;
+  }
+  :global(::view-transition-new(previous)) {
+    animation: 350ms flyInLeft;
+    transform-origin: center;
+  }
+
+  @keyframes -global-flyInLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes -global-flyOutLeft {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes -global-flyInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Fly out to right */
+  @keyframes -global-flyOutRight {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes -global-fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes -global-fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
   }
 </style>
