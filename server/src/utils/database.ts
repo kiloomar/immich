@@ -346,6 +346,26 @@ export const tokenizeForSearch = (text: string): string[] => {
   return tokens;
 };
 
+export function isEditedAsset<O>(qb: SelectQueryBuilder<DB, 'asset', O>, edited: boolean) {
+  return qb.where((eb) =>
+    eb.exists(
+      eb
+        .selectFrom('asset_file')
+        .whereRef('asset_file.assetId', '=', 'asset.id')
+        .where('asset_file.edited', '=', edited),
+    ),
+  );
+}
+
+export function withEdits(eb: ExpressionBuilder<DB, 'asset'>) {
+  return jsonArrayFrom(
+    eb
+      .selectFrom('asset_edit')
+      .select(['asset_edit.action', 'asset_edit.parameters', 'asset_edit.index'])
+      .whereRef('asset_edit.assetId', '=', 'asset.id'),
+  ).as('edits');
+}
+
 const joinDeduplicationPlugin = new DeduplicateJoinsPlugin();
 /** TODO: This should only be used for search-related queries, not as a general purpose query builder */
 
