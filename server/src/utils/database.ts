@@ -366,6 +366,13 @@ export function withEdits(eb: ExpressionBuilder<DB, 'asset'>) {
   ).as('edits');
 }
 
+export function withIsEdited(eb: ExpressionBuilder<DB, 'asset'>) {
+  return sql<boolean>`EXISTS(
+    SELECT 1 FROM asset_edit 
+    WHERE asset_edit."assetId" = asset.id
+  )`.as('isEdited');
+}
+
 const joinDeduplicationPlugin = new DeduplicateJoinsPlugin();
 /** TODO: This should only be used for search-related queries, not as a general purpose query builder */
 
