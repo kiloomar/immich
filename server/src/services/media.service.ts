@@ -3,6 +3,7 @@ import { FACE_THUMBNAIL_SIZE, JOBS_ASSET_PAGINATION_SIZE } from 'src/constants';
 import { StorageCore, ThumbnailPathEntity } from 'src/cores/storage.core';
 import { Exif } from 'src/database';
 import { OnEvent, OnJob } from 'src/decorators';
+import { EditActionItem } from 'src/dtos/editing.dto';
 import { SystemConfigFFmpegDto } from 'src/dtos/system-config.dto';
 import {
   AssetFileType,
@@ -314,6 +315,7 @@ export class MediaService extends BaseService {
     originalFileName: string;
     originalPath: string;
     exifInfo: Exif;
+    edits: EditActionItem[];
   }) {
     const { image } = await this.getConfig({ withCache: true });
     const previewPath = StorageCore.getImagePath(asset, AssetPathType.Preview, image.preview.format);
@@ -340,8 +342,13 @@ export class MediaService extends BaseService {
     const thumbnailOptions = { colorspace, processInvalidImages: false, raw: info };
     const promises = [
       this.mediaRepository.generateThumbhash(data, thumbnailOptions),
-      this.mediaRepository.generateThumbnail(data, { ...image.thumbnail, ...thumbnailOptions }, thumbnailPath),
-      this.mediaRepository.generateThumbnail(data, { ...image.preview, ...thumbnailOptions }, previewPath),
+      this.mediaRepository.generateThumbnail(
+        data,
+        { ...image.thumbnail, ...thumbnailOptions },
+        thumbnailPath,
+        asset.edits,
+      ),
+      this.mediaRepository.generateThumbnail(data, { ...image.preview, ...thumbnailOptions }, previewPath, asset.edits),
     ];
 
     let fullsizePath: string | undefined;
@@ -424,6 +431,7 @@ export class MediaService extends BaseService {
       format: ImageFormat.Jpeg,
       raw: info,
       quality: image.thumbnail.quality,
+      // TODO: change this to use EditActionCrop
       crop: this.getCrop(
         { old: { width: oldWidth, height: oldHeight }, new: { width: info.width, height: info.height } },
         { x1, y1, x2, y2 },
