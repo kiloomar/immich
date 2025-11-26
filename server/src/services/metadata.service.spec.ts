@@ -1498,6 +1498,23 @@ describe(MetadataService.name, () => {
         }),
       );
     });
+
+    it('should not overwrite existing width/height if they already exist', async () => {
+      mocks.assetJob.getForMetadataExtraction.mockResolvedValue({
+        ...assetStub.image,
+        width: 1920,
+        height: 1080,
+      });
+      mockReadTags({ ImageWidth: 1280, ImageHeight: 720 });
+
+      await sut.handleMetadataExtraction({ id: assetStub.image.id });
+      expect(mocks.asset.update).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          width: 1280,
+          height: 720,
+        }),
+      );
+    });
   });
 
   describe('handleQueueSidecar', () => {

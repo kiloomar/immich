@@ -308,8 +308,11 @@ export class MetadataService extends BaseService {
         localDateTime: dates.localDateTime,
         fileCreatedAt: dates.dateTimeOriginal ?? undefined,
         fileModifiedAt: stats.mtime,
-        width: assetWidth,
-        height: assetHeight,
+
+        // only update the dimensions if they don't already exist
+        // we don't want to overwrite width/height that are modified by edits
+        width: asset.width == null ? assetWidth : undefined,
+        height: asset.height == null ? assetHeight : undefined,
       }),
       this.applyTagList(asset, exifTags),
     ];

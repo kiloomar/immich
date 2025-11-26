@@ -349,6 +349,8 @@ export const columns = {
     'asset.ownerId',
     'asset.sidecarPath',
     'asset.type',
+    'asset.width',
+    'asset.height',
   ],
   assetFiles: ['asset_file.id', 'asset_file.path', 'asset_file.type'],
   authUser: ['user.id', 'user.name', 'user.email', 'user.isAdmin', 'user.quotaUsageInBytes', 'user.quotaSizeInBytes'],
