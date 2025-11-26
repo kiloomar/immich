@@ -3,7 +3,7 @@ import { FACE_THUMBNAIL_SIZE, JOBS_ASSET_PAGINATION_SIZE } from 'src/constants';
 import { StorageCore, ThumbnailPathEntity } from 'src/cores/storage.core';
 import { Exif } from 'src/database';
 import { OnEvent, OnJob } from 'src/decorators';
-import { EditActionItem } from 'src/dtos/editing.dto';
+import { EditActionCrop, EditActionItem, EditActionType } from 'src/dtos/editing.dto';
 import { SystemConfigFFmpegDto } from 'src/dtos/system-config.dto';
 import {
   AssetFileType,
@@ -29,7 +29,6 @@ import { BoundingBox } from 'src/repositories/machine-learning.repository';
 import { BaseService } from 'src/services/base.service';
 import {
   AudioStreamInfo,
-  CropOptions,
   DecodeToBufferOptions,
   ImageDimensions,
   JobItem,
@@ -74,15 +73,11 @@ export class MediaService extends BaseService {
         jobs.push({ name: JobName.AssetGenerateThumbnails, data: { id: asset.id } });
       }
 
-      if (asset.edits.length > 0) {
-        if (
-          !assetFiles.editedPreviewFile ||
-          !assetFiles.editedThumbnailFile ||
-          !assetFiles.editedFullsizeFile ||
-          force
-        ) {
-          jobs.push({ name: JobName.AssetGenerateThumbnails, data: { id: asset.id, source: 'edit' } });
-        }
+      if (
+        asset.edits.length > 0 &&
+        (!assetFiles.editedPreviewFile || !assetFiles.editedThumbnailFile || !assetFiles.editedFullsizeFile || force)
+      ) {
+        jobs.push({ name: JobName.AssetGenerateThumbnails, data: { id: asset.id, source: 'edit' } });
       }
 
       if (jobs.length >= JOBS_ASSET_PAGINATION_SIZE) {
@@ -214,7 +209,7 @@ export class MediaService extends BaseService {
       generated = await this.generateVideoThumbnails(asset);
     } else if (asset.type === AssetType.Image) {
       this.logger.verbose(`Thumbnail generation for image ${id} ${asset.originalPath}`);
-      generated = await this.generateImageThumbnails(asset);
+      generated = await this.generateImageThumbnails(asset, isEditJob);
     } else {
       this.logger.warn(`Skipping thumbnail generation for asset ${id}: ${asset.type} is not an image or video`);
       return JobStatus.Skipped;
@@ -314,18 +309,28 @@ export class MediaService extends BaseService {
     return { info, data, colorspace };
   }
 
-  private async generateImageThumbnails(asset: {
-    id: string;
-    ownerId: string;
-    originalFileName: string;
-    originalPath: string;
-    exifInfo: Exif;
-    edits?: EditActionItem[]; // TODO: update callers to conditionally include edits
-  }) {
+  private async generateImageThumbnails(
+    asset: {
+      id: string;
+      ownerId: string;
+      originalFileName: string;
+      originalPath: string;
+      exifInfo: Exif;
+      edits?: EditActionItem[]; // TODO: update callers to conditionally include edits
+    },
+    isEdit: boolean,
+  ) {
     const { image } = await this.getConfig({ withCache: true });
-    // TODO: handle paths for edits
-    const previewPath = StorageCore.getImagePath(asset, AssetPathType.Preview, image.preview.format);
-    const thumbnailPath = StorageCore.getImagePath(asset, AssetPathType.Thumbnail, image.thumbnail.format);
+    const previewPath = StorageCore.getImagePath(
+      asset,
+      isEdit ? AssetPathType.EditedPreview : AssetPathType.Preview,
+      image.preview.format,
+    );
+    const thumbnailPath = StorageCore.getImagePath(
+      asset,
+      isEdit ? AssetPathType.EditedThumbnail : AssetPathType.Thumbnail,
+      image.thumbnail.format,
+    );
     this.storageCore.ensureFolders(previewPath);
 
     // Handle embedded preview extraction for RAW files
@@ -362,10 +367,19 @@ export class MediaService extends BaseService {
 
     let fullsizePath: string | undefined;
 
-    if (convertFullsize) {
+    if (convertFullsize || isEdit) {
       // convert a new fullsize image from the same source as the thumbnail
-      fullsizePath = StorageCore.getImagePath(asset, AssetPathType.FullSize, image.fullsize.format);
-      const fullsizeOptions = { format: image.fullsize.format, quality: image.fullsize.quality, ...thumbnailOptions };
+      fullsizePath = StorageCore.getImagePath(
+        asset,
+        isEdit ? AssetPathType.EditedFullSize : AssetPathType.FullSize,
+        image.fullsize.format,
+      );
+      const fullsizeOptions = {
+        format: image.fullsize.format,
+        quality: image.fullsize.quality,
+        edits: asset.edits,
+        ...thumbnailOptions,
+      };
       promises.push(this.mediaRepository.generateThumbnail(data, fullsizeOptions, fullsizePath));
     } else if (generateFullsize && extracted && extracted.format === RawExtractedFormat.Jpeg) {
       fullsizePath = StorageCore.getImagePath(asset, AssetPathType.FullSize, extracted.format);
@@ -441,12 +455,14 @@ export class MediaService extends BaseService {
       raw: info,
       quality: image.thumbnail.quality,
       // TODO: change this to use EditActionCrop
-      crop: this.getCrop(
-        { old: { width: oldWidth, height: oldHeight }, new: { width: info.width, height: info.height } },
-        { x1, y1, x2, y2 },
-      ),
       processInvalidImages: false,
       size: FACE_THUMBNAIL_SIZE,
+      edits: [
+        this.getCrop(
+          { old: { width: oldWidth, height: oldHeight }, new: { width: info.width, height: info.height } },
+          { x1, y1, x2, y2 },
+        ),
+      ],
     };
 
     await this.mediaRepository.generateThumbnail(decodedImage, thumbnailOptions, thumbnailPath);
@@ -455,7 +471,10 @@ export class MediaService extends BaseService {
     return JobStatus.Success;
   }
 
-  private getCrop(dims: { old: ImageDimensions; new: ImageDimensions }, { x1, y1, x2, y2 }: BoundingBox): CropOptions {
+  private getCrop(
+    dims: { old: ImageDimensions; new: ImageDimensions },
+    { x1, y1, x2, y2 }: BoundingBox,
+  ): EditActionCrop {
     // face bounding boxes can spill outside the image dimensions
     const clampedX1 = clamp(x1, 0, dims.old.width);
     const clampedY1 = clamp(y1, 0, dims.old.height);
@@ -482,11 +501,16 @@ export class MediaService extends BaseService {
       Math.min(dims.new.height - 1, middleY + targetHalfSize) - middleY,
     );
 
+    // convert to fractional LRTB crop action
     return {
-      left: middleX - newHalfSize,
-      top: middleY - newHalfSize,
-      width: newHalfSize * 2,
-      height: newHalfSize * 2,
+      action: EditActionType.Crop,
+      parameters: {
+        left: (middleX - newHalfSize) / dims.new.width,
+        top: (middleY - newHalfSize) / dims.new.height,
+        right: (middleX + newHalfSize) / dims.new.width,
+        bottom: (middleY + newHalfSize) / dims.new.height,
+      },
+      index: 0,
     };
   }
 
