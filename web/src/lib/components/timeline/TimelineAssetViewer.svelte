@@ -84,9 +84,9 @@
   };
 
   const handleClose = async (asset: { id: string }) => {
-    const awaitInit = new Promise((resolve) => eventManager.once('WaitForInit', resolve));
+    const awaitInit = new Promise<void>((resolve) => eventManager.once('StartViewTransition', resolve));
     console.log('emit back to timeline');
-    eventManager.emit('BackToTimeline', { assetId: asset.id });
+    eventManager.emit('TransitionToTimeline', { id: asset.id });
     console.log('waitint for init');
     await awaitInit;
     console.log('done with  for init');

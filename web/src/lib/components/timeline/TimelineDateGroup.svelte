@@ -7,6 +7,7 @@
   import { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
   import type { TimelineAsset } from '$lib/managers/timeline-manager/types';
   import { assetSnapshot, assetsSnapshot } from '$lib/managers/timeline-manager/utils.svelte';
+  import { viewTransitionManager } from '$lib/managers/ViewTransitionManager.svelte';
   import type { AssetInteraction } from '$lib/stores/asset-interaction.svelte';
   import { assetViewingStore } from '$lib/stores/asset-viewing.store';
   import { isSelectingAllAssets } from '$lib/stores/assets-store.svelte';
@@ -68,7 +69,7 @@
   let hoveredDayGroup = $state();
   const send = shared.send;
 
-  let clickedThumb = $state<string | null>(null);
+  let animationTargetAssetId = $state<string | null>(null);
 
   const transitionDuration = $derived.by(() =>
     monthGroup.timelineManager.suspendTransitions && !$isUploading ? 0 : 150,
@@ -138,36 +139,28 @@
     });
     return getDateLocaleString(date);
   };
-  let animateTarget = $state<string | null>(null);
-  $inspect(clickedThumb).with((a, b) => console.log('clicked', a, b));
-  $inspect(animateTarget).with((a, b) => console.log('clicked', a, b));
+  let transitionTargetAssetId = $state<string | null>(null);
 
-  eventManager.on('BackToTimeline', async ({ assetId }) => {
-    const asset = await monthGroup.findAssetById({ id: assetId });
+  eventManager.on('TransitionToTimeline', ({ id }) => {
+    const asset = monthGroup.findAssetById({ id });
     if (!asset) {
       return;
     }
-    console.log('BACK TO TIMLEINE');
 
-    debugger;
-    const navigatingPromise = new Promise((resolve) => {
-      eventManager.once('TimelineLoaded', (assetId) => {
-        console.log('timeline loaded', assetId);
-        animateTarget = assetId;
-        resolve();
-      });
-      console.log('hi');
-      const transition = document.startViewTransition(async () => {
-        console.log('start view transition - 2');
-        eventManager.emit('StartViewTransition');
-        console.log('starting2');
-        eventManager.emit('WaitForInit');
-        await navigatingPromise;
-        console.log('AFTER VIEW TRANS - 2!');
-        debugger;
-      });
-      transition.updateCallbackDone.then(() => ((animateTarget = null), eventManager.emit('EndViewTransition')));
-    });
+    viewTransitionManager.startTransition(
+      new Promise<void>((resolve) => {
+        console.log('BACK TO TIMLEINE');
+        eventManager.once('TimelineLoaded', ({ id }) => {
+          console.log('timeline loaded', id);
+          transitionTargetAssetId = id;
+          resolve();
+        });
+      }),
+      () => {
+        console.log('finished loaded', id);
+        transitionTargetAssetId = null;
+      },
+    );
   });
 </script>
 
@@ -228,13 +221,16 @@
       {#each filterIntersecting(dayGroup.viewerAssets) as viewerAsset (viewerAsset.id)}
         {@const position = viewerAsset.position!}
         {@const asset = viewerAsset.asset!}
-        {@const transitionName = clickedThumb === asset.id || animateTarget === asset.id ? 'good' : undefined}
+        {@const transitionName =
+          animationTargetAssetId === asset.id || transitionTargetAssetId === asset.id ? 'good' : undefined}
 
         <!-- {#if viewerAsset.intersecting} -->
         <!-- note: don't remove data-asset-id - its used by web e2e tests -->
         <div
           data-asset-id={asset.id}
-          data-transition-thumb={clickedThumb === asset.id || animateTarget === asset.id ? true : undefined}
+          data-transition-thumb={animationTargetAssetId === asset.id || transitionTargetAssetId === asset.id
+            ? true
+            : undefined}
           style:view-transition-name={transitionName}
           class="absolute"
           style:top={position.top + 'px'}
@@ -250,10 +246,18 @@
             {groupIndex}
             onClick={async (asset) => {
               console.log('adding clickedThumb', asset.id);
-              clickedThumb = asset.id;
+
+              // tag  target on the 'old' snaptho
+              animationTargetAssetId = asset.id;
+              viewTransitionManager.startTransition(
+                new Promise<void>((resolve) => eventManager.once('AssetViewerLoaded', () => resolve())),
+              );
+
               eventManager.once('StartViewTransition', () => {
                 console.log('removing clickedThumb');
-                clickedThumb = null;
+                // remove target on the 'old' view,
+                // asset-viewer will tag new target element for 'new' snapshot
+                animationTargetAssetId = null;
               });
 
               if (typeof onThumbnailClick === 'function') {

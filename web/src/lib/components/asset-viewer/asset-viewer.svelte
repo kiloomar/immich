@@ -169,7 +169,7 @@
   onMount(async () => {
     console.log('on mount - assetviwer');
     eventManager.emit('AssetViewerLoaded');
-    eventManager.once('StartViewTransition', () => {
+    eventManager.on('Finished', () => {
       debugger;
       transitionName = null;
       console.log('clearning tasnition name in asset viwer');
