@@ -32,7 +32,15 @@ import {
 import { BaseService } from 'src/services/base.service';
 import { ISidecarWriteJob, JobItem, JobOf } from 'src/types';
 import { requireElevatedPermission } from 'src/utils/access';
-import { getAssetFiles, getMyPartnerIds, onAfterUnlink, onBeforeLink, onBeforeUnlink } from 'src/utils/asset.util';
+import {
+  getAssetFiles,
+  getDimensions,
+  getMyPartnerIds,
+  onAfterUnlink,
+  onBeforeLink,
+  onBeforeUnlink,
+} from 'src/utils/asset.util';
+import { transformOcrBoundingBox } from 'src/utils/transform';
 
 @Injectable()
 export class AssetService extends BaseService {
@@ -67,6 +75,7 @@ export class AssetService extends BaseService {
       owner: true,
       faces: { person: true },
       stack: { assets: true },
+      edits: true,
       tags: true,
     });
 
@@ -395,7 +404,16 @@ export class AssetService extends BaseService {
 
   async getOcr(auth: AuthDto, id: string): Promise<AssetOcrResponseDto[]> {
     await this.requireAccess({ auth, permission: Permission.AssetRead, ids: [id] });
-    return this.ocrRepository.getByAssetId(id);
+    const ocr = await this.ocrRepository.getByAssetId(id);
+    const asset = await this.assetRepository.getById(id, { exifInfo: true, edits: true });
+
+    if (!asset || !asset.exifInfo || !asset.edits) {
+      throw new BadRequestException('Asset not found');
+    }
+
+    const dimensions = getDimensions(asset.exifInfo);
+
+    return ocr.map((item) => transformOcrBoundingBox(item, asset.edits!, dimensions));
   }
 
   async upsertMetadata(auth: AuthDto, id: string, dto: AssetMetadataUpsertDto): Promise<AssetMetadataResponseDto[]> {
@@ -500,8 +518,12 @@ export class AssetService extends BaseService {
     }
 
     // check that crop parameters will not go out of bounds
-    const assetWidth = asset.exifInfo?.exifImageWidth ?? 0;
-    const assetHeight = asset.exifInfo?.exifImageHeight ?? 0;
+    const { width: assetWidth, height: assetHeight } = getDimensions(asset.exifInfo!);
+
+    if (!assetWidth || !assetHeight) {
+      throw new BadRequestException('Asset dimensions are not available for editing');
+    }
+
     const crop = dto.edits.find((e) => e.action === EditAction.Crop)?.parameters;
     if (crop) {
       const { x, y, width, height } = crop;

@@ -182,13 +182,14 @@ export function withSmartSearch<O>(qb: SelectQueryBuilder<DB, 'asset', O>) {
     .select((eb) => toJson(eb, 'smart_search').as('smartSearch'));
 }
 
-export function withFaces(eb: ExpressionBuilder<DB, 'asset'>, withDeletedFace?: boolean) {
+export function withFaces(eb: ExpressionBuilder<DB, 'asset'>, withHidden?: boolean, withDeletedFace?: boolean) {
   return jsonArrayFrom(
     eb
       .selectFrom('asset_face')
       .selectAll('asset_face')
       .whereRef('asset_face.assetId', '=', 'asset.id')
-      .$if(!withDeletedFace, (qb) => qb.where('asset_face.deletedAt', 'is', null)),
+      .$if(!withDeletedFace, (qb) => qb.where('asset_face.deletedAt', 'is', null))
+      .$if(!withHidden, (qb) => qb.where('asset_face.isVisible', '=', true)),
   ).as('faces');
 }
 
@@ -210,7 +211,11 @@ export function withFilePath(eb: ExpressionBuilder<DB, 'asset'>, type: AssetFile
     .where('asset_file.type', '=', type);
 }
 
-export function withFacesAndPeople(eb: ExpressionBuilder<DB, 'asset'>, withDeletedFace?: boolean) {
+export function withFacesAndPeople(
+  eb: ExpressionBuilder<DB, 'asset'>,
+  withHidden?: boolean,
+  withDeletedFace?: boolean,
+) {
   return jsonArrayFrom(
     eb
       .selectFrom('asset_face')
@@ -222,7 +227,8 @@ export function withFacesAndPeople(eb: ExpressionBuilder<DB, 'asset'>, withDelet
       .selectAll('asset_face')
       .select((eb) => eb.table('person').$castTo<Person>().as('person'))
       .whereRef('asset_face.assetId', '=', 'asset.id')
-      .$if(!withDeletedFace, (qb) => qb.where('asset_face.deletedAt', 'is', null)),
+      .$if(!withDeletedFace, (qb) => qb.where('asset_face.deletedAt', 'is', null))
+      .$if(!withHidden, (qb) => qb.where('asset_face.isVisible', 'is', true)),
   ).as('faces');
 }
 
@@ -234,6 +240,7 @@ export function hasPeople<O>(qb: SelectQueryBuilder<DB, 'asset', O>, personIds: 
         .select('assetId')
         .where('personId', '=', anyUuid(personIds!))
         .where('deletedAt', 'is', null)
+        .where('isVisible', 'is', true)
         .groupBy('assetId')
         .having((eb) => eb.fn.count('personId').distinct(), '=', personIds.length)
         .as('has_people'),

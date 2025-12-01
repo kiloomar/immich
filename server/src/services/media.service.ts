@@ -38,7 +38,7 @@ import {
   VideoInterfaces,
   VideoStreamInfo,
 } from 'src/types';
-import { getAssetFiles } from 'src/utils/asset.util';
+import { getAssetFiles, getDimensions } from 'src/utils/asset.util';
 import { BaseConfig, ThumbnailConfig } from 'src/utils/media';
 import { mimeTypes } from 'src/utils/mime-types';
 import { clamp, isFaceImportEnabled, isFacialRecognitionEnabled } from 'src/utils/misc';
@@ -282,6 +282,20 @@ export class MediaService extends BaseService {
       }
 
       await this.assetRepository.update({ id: asset.id, ...generated.fullsizeDimensions });
+    }
+
+    if (source == 'edit') {
+      // check if the edits modify faces or ocr
+      const assetFaces = await this.personRepository.getFaces(asset.id, { onlyVisible: false });
+      const ocrData = await this.ocrRepository.getByAssetId(asset.id, { onlyVisible: false });
+      const crop = asset.edits.find((e) => e.action === EditAction.Crop);
+      const originalDimensions = getDimensions(asset.exifInfo!);
+
+      const faceStatuses = this.mediaRepository.checkFaceVisibility(assetFaces, originalDimensions, crop);
+      await this.personRepository.updateFaceVisibilities(faceStatuses.visible, faceStatuses.hidden);
+
+      const ocrStatuses = this.mediaRepository.checkOcrVisibility(ocrData, originalDimensions, crop);
+      await this.ocrRepository.updateOcrVisibilities(asset.id, ocrStatuses.visible, ocrStatuses.hidden);
     }
 
     return JobStatus.Success;
