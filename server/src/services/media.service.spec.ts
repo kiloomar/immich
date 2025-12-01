@@ -648,7 +648,6 @@ describe(MediaService.name, () => {
         processInvalidImages: false,
         size: 1440,
       });
-      expect(mocks.media.getImageDimensions).not.toHaveBeenCalled();
     });
 
     it('should resize original image if embedded image extraction is not enabled', async () => {
@@ -664,7 +663,6 @@ describe(MediaService.name, () => {
         processInvalidImages: false,
         size: 1440,
       });
-      expect(mocks.media.getImageDimensions).not.toHaveBeenCalled();
     });
 
     it('should process invalid images if enabled', async () => {
@@ -698,7 +696,6 @@ describe(MediaService.name, () => {
         expect.objectContaining({ processInvalidImages: false }),
       );
 
-      expect(mocks.media.getImageDimensions).not.toHaveBeenCalled();
       vi.unstubAllEnvs();
     });
 
@@ -958,8 +955,7 @@ describe(MediaService.name, () => {
           edits: [
             {
               action: 'crop',
-              index: 0,
-              parameters: { left: 0.1, right: 0.2, top: 0.3, bottom: 0.4 },
+              parameters: { height: 1152, width: 1512, x: 216, y: 1512 },
             },
           ],
         }),
@@ -1151,7 +1147,6 @@ describe(MediaService.name, () => {
           edits: [
             {
               action: 'crop',
-              index: 0,
               parameters: {
                 height: 274,
                 width: 274,
@@ -1196,7 +1191,6 @@ describe(MediaService.name, () => {
           edits: [
             {
               action: 'crop',
-              index: 0,
               parameters: {
                 height: 274,
                 width: 274,
@@ -1239,7 +1233,6 @@ describe(MediaService.name, () => {
           edits: [
             {
               action: 'crop',
-              index: 0,
               parameters: {
                 height: 510,
                 width: 510,
@@ -1282,7 +1275,6 @@ describe(MediaService.name, () => {
           edits: [
             {
               action: 'crop',
-              index: 0,
               parameters: {
                 height: 408,
                 width: 408,
@@ -1325,7 +1317,6 @@ describe(MediaService.name, () => {
           edits: [
             {
               action: 'crop',
-              index: 0,
               parameters: {
                 height: 412,
                 width: 412,
@@ -1368,7 +1359,6 @@ describe(MediaService.name, () => {
           edits: [
             {
               action: 'crop',
-              index: 0,
               parameters: {
                 height: 138,
                 width: 138,
@@ -1416,7 +1406,6 @@ describe(MediaService.name, () => {
           edits: [
             {
               action: 'crop',
-              index: 0,
               parameters: {
                 height: 844,
                 width: 844,

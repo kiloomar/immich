@@ -9,13 +9,6 @@ export enum EditAction {
   Mirror = 'mirror',
 }
 
-export enum RotationAngle {
-  Angle0 = 0,
-  Angle90 = 90,
-  Angle180 = 180,
-  Angle270 = 270,
-}
-
 export enum MirrorAxis {
   Horizontal = 'horizontal',
   Vertical = 'vertical',
@@ -44,9 +37,9 @@ export class CropParameters {
 }
 
 export class RotateParameters {
-  @IsEnum(RotationAngle)
-  @ApiProperty({ enum: RotationAngle, enumName: 'RotationAngle', description: 'Rotation angle in degrees' })
-  angle!: RotationAngle;
+  @IsEnum([0, 90, 180, 270])
+  @ApiProperty({ enum: [0, 90, 180, 270], description: 'Rotation angle in degrees' })
+  angle!: number;
 }
 
 export class MirrorParameters {
