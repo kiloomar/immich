@@ -219,23 +219,50 @@ describe('transformOcrBoundingBox', () => {
   });
 
   describe('with rotate edit', () => {
-    it('should rotate normalized coordinates 90 degrees', () => {
+    it('should rotate normalized coordinates 90 degrees and reorder points', () => {
       const edits: EditActionItem[] = [{ action: EditAction.Rotate, parameters: { angle: 90 } }];
       const result = transformOcrBoundingBox(baseOcr, edits, baseDimensions);
 
-      // After 90 rotation, coordinates transform
-      // Original corners transform to new positions
       expect(result.id).toBe(baseOcr.id);
       expect(result.text).toBe(baseOcr.text);
+      expect(result.x1).toBeCloseTo(0.8, 5);
+      expect(result.y1).toBeCloseTo(0.1, 5);
+      expect(result.x2).toBeCloseTo(0.9, 5);
+      expect(result.y2).toBeCloseTo(0.1, 5);
+      expect(result.x3).toBeCloseTo(0.9, 5);
+      expect(result.y3).toBeCloseTo(0.2, 5);
+      expect(result.x4).toBeCloseTo(0.8, 5);
+      expect(result.y4).toBeCloseTo(0.2, 5);
     });
 
-    it('should rotate 180 degrees', () => {
+    it('should rotate 180 degrees and reorder points', () => {
       const edits: EditActionItem[] = [{ action: EditAction.Rotate, parameters: { angle: 180 } }];
       const result = transformOcrBoundingBox(baseOcr, edits, baseDimensions);
 
-      // 180 rotation: (x,y) -> (1-x, 1-y) approximately for normalized coords
-      expect(result.x1).toBeCloseTo(0.9, 5);
-      expect(result.y1).toBeCloseTo(0.9, 5);
+      expect(result.x1).toBeCloseTo(0.8, 5);
+      expect(result.y1).toBeCloseTo(0.8, 5);
+      expect(result.x2).toBeCloseTo(0.9, 5);
+      expect(result.y2).toBeCloseTo(0.8, 5);
+      expect(result.x3).toBeCloseTo(0.9, 5);
+      expect(result.y3).toBeCloseTo(0.9, 5);
+      expect(result.x4).toBeCloseTo(0.8, 5);
+      expect(result.y4).toBeCloseTo(0.9, 5);
+    });
+
+    it('should rotate 270 degrees and reorder points', () => {
+      const edits: EditActionItem[] = [{ action: EditAction.Rotate, parameters: { angle: 270 } }];
+      const result = transformOcrBoundingBox(baseOcr, edits, baseDimensions);
+
+      expect(result.id).toBe(baseOcr.id);
+      expect(result.text).toBe(baseOcr.text);
+      expect(result.x1).toBeCloseTo(0.1, 5);
+      expect(result.y1).toBeCloseTo(0.8, 5);
+      expect(result.x2).toBeCloseTo(0.2, 5);
+      expect(result.y2).toBeCloseTo(0.8, 5);
+      expect(result.x3).toBeCloseTo(0.2, 5);
+      expect(result.y3).toBeCloseTo(0.9, 5);
+      expect(result.x4).toBeCloseTo(0.1, 5);
+      expect(result.y4).toBeCloseTo(0.9, 5);
     });
   });
 

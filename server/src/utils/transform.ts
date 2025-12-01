@@ -1,4 +1,4 @@
-import { EditActionItem } from 'src/dtos/editing.dto';
+import { EditAction, EditActionItem } from 'src/dtos/editing.dto';
 import { AssetOcrResponseDto } from 'src/dtos/ocr.dto';
 import { ImageDimensions } from 'src/types';
 import { applyToPoint, compose, flipX, flipY, identity, Matrix, rotate, scale, translate } from 'transformation-matrix';
@@ -148,6 +148,24 @@ export const transformFaceBoundingBox = (
   };
 };
 
+const reorderQuadPointsForRotation = (points: Point[], rotationDegrees: number): Point[] => {
+  const [p1, p2, p3, p4] = points;
+  switch (rotationDegrees) {
+    case 90: {
+      return [p4, p1, p2, p3];
+    }
+    case 180: {
+      return [p3, p4, p1, p2];
+    }
+    case 270: {
+      return [p2, p3, p4, p1];
+    }
+    default: {
+      return points;
+    }
+  }
+};
+
 export const transformOcrBoundingBox = (
   box: AssetOcrResponseDto,
   edits: EditActionItem[],
@@ -166,7 +184,11 @@ export const transformOcrBoundingBox = (
 
   const { points: transformedPoints, currentWidth, currentHeight } = transformPoints(points, edits, imageDimensions);
 
-  const [p1, p2, p3, p4] = transformedPoints;
+  // Reorder points to maintain semantic ordering (topLeft, topRight, bottomRight, bottomLeft)
+  const netRotation = edits.find((e) => e.action == EditAction.Rotate)?.parameters.angle ?? 0 % 360;
+  const reorderedPoints = reorderQuadPointsForRotation(transformedPoints, netRotation);
+
+  const [p1, p2, p3, p4] = reorderedPoints;
   return {
     ...box,
     x1: p1.x / currentWidth,
