@@ -19230,28 +19230,20 @@
       "RotateParameters": {
         "properties": {
           "angle": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/RotationAngle"
-              }
+            "description": "Rotation angle in degrees",
+            "enum": [
+              0,
+              90,
+              180,
+              270
             ],
-            "description": "Rotation angle in degrees"
+            "type": "number"
           }
         },
         "required": [
           "angle"
         ],
         "type": "object"
-      },
-      "RotationAngle": {
-        "description": "Rotation angle in degrees",
-        "enum": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "type": "number"
       },
       "SearchAlbumResponseDto": {
         "properties": {

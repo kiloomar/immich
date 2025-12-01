@@ -10,8 +10,7 @@ rollback
 -- AssetEditRepository.getEditsForAsset
 select
   "action",
-  "parameters",
-  "index"
+  "parameters"
 from
   "asset_edit"
 where

@@ -552,8 +552,6 @@ class ApiClient {
           return ReverseGeocodingStateResponseDto.fromJson(value);
         case 'RotateParameters':
           return RotateParameters.fromJson(value);
-        case 'RotationAngle':
-          return RotationAngleTypeTransformer().decode(value);
         case 'SearchAlbumResponseDto':
           return SearchAlbumResponseDto.fromJson(value);
         case 'SearchAssetResponseDto':

@@ -81,14 +81,11 @@ select
       (
         select
           "asset_edit"."action",
-          "asset_edit"."parameters",
-          "asset_edit"."index"
+          "asset_edit"."parameters"
         from
           "asset_edit"
         where
           "asset_edit"."assetId" = "asset"."id"
-        order by
-          "asset_edit"."index" asc
       ) as agg
   ) as "edits"
 from
@@ -159,14 +156,11 @@ select
       (
         select
           "asset_edit"."action",
-          "asset_edit"."parameters",
-          "asset_edit"."index"
+          "asset_edit"."parameters"
         from
           "asset_edit"
         where
           "asset_edit"."assetId" = "asset"."id"
-        order by
-          "asset_edit"."index" asc
       ) as agg
   ) as "edits",
   to_json("asset_exif") as "exifInfo"
@@ -206,12 +200,13 @@ select
         where
           "asset_face"."assetId" = "asset"."id"
           and "asset_face"."deletedAt" is null
+          and "asset_face"."isVisible" = $1
       ) as agg
   ) as "faces"
 from
   "asset"
 where
-  "asset"."id" = $1
+  "asset"."id" = $2
 
 -- AssetJobRepository.getAlbumThumbnailFiles
 select
@@ -381,6 +376,7 @@ select
         where
           "asset_face"."assetId" = "asset"."id"
           and "asset_face"."deletedAt" is null
+          and "asset_face"."isVisible" is true
       ) as agg
   ) as "faces",
   (
