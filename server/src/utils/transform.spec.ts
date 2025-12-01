@@ -29,7 +29,6 @@ describe('transformFaceBoundingBox', () => {
       ];
       const result = transformFaceBoundingBox(baseFace, edits, baseDimensions);
 
-      // Face at (100,100)-(200,200) should be shifted by crop offset (50,50)
       expect(result.boundingBoxX1).toBe(50);
       expect(result.boundingBoxY1).toBe(50);
       expect(result.boundingBoxX2).toBe(150);
@@ -39,13 +38,11 @@ describe('transformFaceBoundingBox', () => {
     });
 
     it('should handle face partially outside crop area', () => {
-      // Face at top-left corner, crop starts at (150, 150)
       const edits: EditActionItem[] = [
         { action: EditAction.Crop, parameters: { x: 150, y: 150, width: 400, height: 300 } },
       ];
       const result = transformFaceBoundingBox(baseFace, edits, baseDimensions);
 
-      // Face would be at negative coordinates relative to crop
       expect(result.boundingBoxX1).toBe(-50);
       expect(result.boundingBoxY1).toBe(-50);
       expect(result.boundingBoxX2).toBe(50);
@@ -58,12 +55,9 @@ describe('transformFaceBoundingBox', () => {
       const edits: EditActionItem[] = [{ action: EditAction.Rotate, parameters: { angle: 90 } }];
       const result = transformFaceBoundingBox(baseFace, edits, baseDimensions);
 
-      // 90 degree rotation swaps dimensions
       expect(result.imageWidth).toBe(800);
       expect(result.imageHeight).toBe(1000);
 
-      // Face originally at (100,100)-(200,200) on 1000x800 image
-      // After 90 degree rotation on 800x1000 image
       expect(result.boundingBoxX1).toBe(600);
       expect(result.boundingBoxY1).toBe(100);
       expect(result.boundingBoxX2).toBe(700);
@@ -77,7 +71,6 @@ describe('transformFaceBoundingBox', () => {
       expect(result.imageWidth).toBe(1000);
       expect(result.imageHeight).toBe(800);
 
-      // 180 degree rotation mirrors around center
       expect(result.boundingBoxX1).toBe(800);
       expect(result.boundingBoxY1).toBe(600);
       expect(result.boundingBoxX2).toBe(900);
@@ -98,7 +91,6 @@ describe('transformFaceBoundingBox', () => {
       const edits: EditActionItem[] = [{ action: EditAction.Mirror, parameters: { axis: MirrorAxis.Horizontal } }];
       const result = transformFaceBoundingBox(baseFace, edits, baseDimensions);
 
-      // Horizontal mirror flips X coordinates (left-right flip)
       expect(result.boundingBoxX1).toBe(800);
       expect(result.boundingBoxY1).toBe(100);
       expect(result.boundingBoxX2).toBe(900);
@@ -111,7 +103,6 @@ describe('transformFaceBoundingBox', () => {
       const edits: EditActionItem[] = [{ action: EditAction.Mirror, parameters: { axis: MirrorAxis.Vertical } }];
       const result = transformFaceBoundingBox(baseFace, edits, baseDimensions);
 
-      // Vertical mirror flips Y coordinates (top-bottom flip)
       expect(result.boundingBoxX1).toBe(100);
       expect(result.boundingBoxY1).toBe(600);
       expect(result.boundingBoxX2).toBe(200);
@@ -129,8 +120,6 @@ describe('transformFaceBoundingBox', () => {
       ];
       const result = transformFaceBoundingBox(baseFace, edits, baseDimensions);
 
-      // After crop: face at (50,50)-(150,150), image 400x300
-      // After 90 rotation: image 300x400
       expect(result.imageWidth).toBe(300);
       expect(result.imageHeight).toBe(400);
     });
@@ -142,8 +131,6 @@ describe('transformFaceBoundingBox', () => {
       ];
       const result = transformFaceBoundingBox(baseFace, edits, baseDimensions);
 
-      // After crop: face at (100,100)-(200,200), image 500x400
-      // After vertical mirror: y positions flip around center (200)
       expect(result.boundingBoxX1).toBe(100);
       expect(result.boundingBoxX2).toBe(200);
       expect(result.boundingBoxY1).toBe(200);
@@ -159,9 +146,6 @@ describe('transformFaceBoundingBox', () => {
       ];
       const result = transformFaceBoundingBox(baseFace, edits, scaledDimensions);
 
-      // Face original: (100,100)-(200,200) on 1000x800
-      // Scaled to 500x400: (50,50)-(100,100)
-      // After crop offset (50,50): (0,0)-(50,50)
       expect(result.boundingBoxX1).toBe(0);
       expect(result.boundingBoxY1).toBe(0);
       expect(result.boundingBoxX2).toBe(50);
@@ -198,7 +182,6 @@ describe('transformOcrBoundingBox', () => {
 
   describe('with crop edit', () => {
     it('should adjust normalized coordinates for crop', () => {
-      // Crop from (100,80) with size 400x320 on 1000x800 image
       const edits: EditActionItem[] = [
         { action: EditAction.Crop, parameters: { x: 100, y: 80, width: 400, height: 320 } },
       ];
@@ -271,7 +254,6 @@ describe('transformOcrBoundingBox', () => {
       const edits: EditActionItem[] = [{ action: EditAction.Mirror, parameters: { axis: MirrorAxis.Horizontal } }];
       const result = transformOcrBoundingBox(baseOcr, edits, baseDimensions);
 
-      // Horizontal mirror flips X coordinates (left-right flip)
       expect(result.x1).toBeCloseTo(0.9, 5);
       expect(result.y1).toBeCloseTo(0.1, 5);
     });
@@ -280,7 +262,6 @@ describe('transformOcrBoundingBox', () => {
       const edits: EditActionItem[] = [{ action: EditAction.Mirror, parameters: { axis: MirrorAxis.Vertical } }];
       const result = transformOcrBoundingBox(baseOcr, edits, baseDimensions);
 
-      // Vertical mirror flips Y coordinates (top-bottom flip)
       expect(result.x1).toBeCloseTo(0.1, 5);
       expect(result.y1).toBeCloseTo(0.9, 5);
     });
