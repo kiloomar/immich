@@ -129,7 +129,7 @@ export class BaseService {
     protected apiKeyRepository: ApiKeyRepository,
     protected appRepository: AppRepository,
     protected assetRepository: AssetRepository,
-    protected editRepository: AssetEditRepository,
+    protected assetEditRepository: AssetEditRepository,
     protected assetJobRepository: AssetJobRepository,
     protected auditRepository: AuditRepository,
     protected configRepository: ConfigRepository,

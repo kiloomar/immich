@@ -488,7 +488,7 @@ export class AssetService extends BaseService {
 
   async getAssetEdits(auth: AuthDto, id: string): Promise<AssetEditsDto> {
     await this.requireAccess({ auth, permission: Permission.AssetRead, ids: [id] });
-    const edits = await this.editRepository.getEditsForAsset(id);
+    const edits = await this.assetEditRepository.getEditsForAsset(id);
     return {
       assetId: id,
       edits,
@@ -549,7 +549,7 @@ export class AssetService extends BaseService {
       }
     }
 
-    await this.editRepository.storeEdits(id, dto.edits);
+    await this.assetEditRepository.storeEdits(id, dto.edits);
     await this.jobRepository.queue({
       name: JobName.AssetGenerateThumbnails,
       data: { id, source: 'edit', notify: true },
@@ -570,7 +570,7 @@ export class AssetService extends BaseService {
       throw new BadRequestException('Asset not found');
     }
 
-    await this.editRepository.deleteEditsForAsset(id);
+    await this.assetEditRepository.deleteEditsForAsset(id);
     await this.jobRepository.queue({
       name: JobName.AssetGenerateThumbnails,
       data: { id, source: 'edit', notify: true },
