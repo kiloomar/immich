@@ -224,5 +224,5 @@ export const getDimensions = (exifInfo: ExifResponseDto | Exif) => {
 };
 
 export const isPanorama = (asset: { exifInfo?: Exif | null; originalFileName: string }) => {
-  return asset.exifInfo?.projectionType === 'EQUIRECTANGULAR' || asset.originalFileName.endsWith('.insp');
+  return asset.exifInfo?.projectionType === 'EQUIRECTANGULAR' || asset.originalFileName.toLowerCase().endsWith('.insp');
 };
