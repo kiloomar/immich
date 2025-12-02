@@ -506,6 +506,19 @@ export class AssetService extends BaseService {
       throw new BadRequestException('Only images can be edited');
     }
 
+    if (asset.livePhotoVideoId != null) {
+      throw new BadRequestException('Editing live photos is not supported');
+    }
+
+    const filename = asset.originalPath?.toLowerCase() || '';
+    if (asset.exifInfo?.projectionType === 'EQUIRECTANGULAR' || filename.endsWith('.insp')) {
+      throw new BadRequestException('Editing panorama images is not supported');
+    }
+
+    if (filename.endsWith('.gif')) {
+      throw new BadRequestException('Editing GIF images is not supported');
+    }
+
     // verify there are unique actions
     // mirror can be duplicated but must have different parameters
     const actionSet = new Set<string>();
