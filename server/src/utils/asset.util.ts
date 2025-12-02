@@ -18,6 +18,7 @@ export const getAssetFile = (files: AssetFile[], type: AssetFileType | Generated
 };
 
 export const getAssetFiles = (files: AssetFile[]) => ({
+  originalFile: getAssetFile(files, AssetFileType.Original),
   fullsizeFile: getAssetFile(files, AssetFileType.FullSize),
   previewFile: getAssetFile(files, AssetFileType.Preview),
   thumbnailFile: getAssetFile(files, AssetFileType.Thumbnail),

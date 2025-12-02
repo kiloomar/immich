@@ -11,7 +11,6 @@ import { AssetExifTable } from 'src/schema/tables/asset-exif.table';
 import { AssetFileTable } from 'src/schema/tables/asset-file.table';
 import { AssetJobStatusTable } from 'src/schema/tables/asset-job-status.table';
 import { AssetTable } from 'src/schema/tables/asset.table';
-import { AssetMetadataItem } from 'src/types';
 import {
   anyUuid,
   asUuid,
@@ -228,7 +227,7 @@ export class AssetRepository {
       .execute();
   }
 
-  upsertMetadata(id: string, items: AssetMetadataItem[]) {
+  upsertMetadata(id: string, items: Array<{ key: AssetMetadataKey; value: object }>) {
     return this.db
       .insertInto('asset_metadata')
       .values(items.map((item) => ({ assetId: id, ...item })))
@@ -401,6 +400,16 @@ export class AssetRepository {
   @GenerateSql()
   getFileSamples() {
     return this.db.selectFrom('asset_file').select(['assetId', 'path']).limit(sql.lit(3)).execute();
+  }
+
+  getForCopy(id: string) {
+    return this.db
+      .selectFrom('asset')
+      .select(['id', 'stackId', 'isFavorite'])
+      .select(withFiles)
+      .where('id', '=', asUuid(id))
+      .limit(1)
+      .executeTakeFirst();
   }
 
   @GenerateSql({ params: [DummyValue.UUID] })
@@ -854,12 +863,8 @@ export class AssetRepository {
       .execute();
   }
 
-  async deleteFile(file: Pick<Selectable<AssetFileTable>, 'assetId' | 'type'>): Promise<void> {
-    await this.db
-      .deleteFrom('asset_file')
-      .where('assetId', '=', asUuid(file.assetId))
-      .where('type', '=', file.type)
-      .execute();
+  async deleteFile({ assetId, type }: { assetId: string; type: AssetFileType }): Promise<void> {
+    await this.db.deleteFrom('asset_file').where('assetId', '=', asUuid(assetId)).where('type', '=', type).execute();
   }
 
   async deleteFiles(files: Pick<Selectable<AssetFileTable>, 'id'>[]): Promise<void> {

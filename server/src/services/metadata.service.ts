@@ -367,12 +367,12 @@ export class MetadataService extends BaseService {
       break;
     }
 
-    const existingSidecar = asset.files?.find((file) => file.type === AssetFileType.Sidecar) ?? null;
+    const { sidecarFile } = getAssetFiles(asset.files);
 
-    const isChanged = sidecarPath !== existingSidecar?.path;
+    const isChanged = sidecarPath !== sidecarFile?.path;
 
     this.logger.debug(
-      `Sidecar check found old=${existingSidecar?.path}, new=${sidecarPath} will ${isChanged ? 'update' : 'do nothing for'}  asset ${asset.id}: ${asset.originalPath}`,
+      `Sidecar check found old=${sidecarFile?.path}, new=${sidecarPath} will ${isChanged ? 'update' : 'do nothing for'}  asset ${asset.id}: ${asset.originalPath}`,
     );
 
     if (!isChanged) {
@@ -406,14 +406,15 @@ export class MetadataService extends BaseService {
 
     const tagsList = (asset.tags || []).map((tag) => tag.value);
 
-    const existingSidecar = asset.files?.find((file) => file.type === AssetFileType.Sidecar) ?? null;
     const original = asset.files?.find((file) => file.type === AssetFileType.Original) ?? null;
 
-    if (!original) {
+    const { sidecarFile, originalFile } = getAssetFiles(asset.files);
+
+    if (!originalFile) {
       throw new Error(`Asset ${asset.id} has no original file`);
     }
 
-    const sidecarPath = existingSidecar?.path || `${original.path}.xmp`; // prefer file.jpg.xmp by default
+    const sidecarPath = sidecarFile?.path || `${originalFile.path}.xmp`; // prefer file.jpg.xmp by default
     const exif = _.omitBy(
       <Tags>{
         Description: description,
@@ -440,21 +441,15 @@ export class MetadataService extends BaseService {
     return JobStatus.Success;
   }
 
-  private getSidecarCandidates(files: AssetFile[] | null) {
-    const original = files?.find((file) => file.type === AssetFileType.Original);
-    if (!original) {
-      return [];
-    }
-
+  private getSidecarCandidates({ files, originalPath }: { files: AssetFile[]; originalPath: string }) {
     const candidates: string[] = [];
 
-    const existingSidecar = files?.find((file) => file.type === AssetFileType.Sidecar);
-
-    if (existingSidecar) {
-      candidates.push(existingSidecar.path);
+    const { sidecarFile } = getAssetFiles(files);
+    if (sidecarFile?.path) {
+      candidates.push(sidecarFile.path);
     }
 
-    const assetPath = parse(original.path);
+    const assetPath = parse(originalPath);
 
     candidates.push(
       // IMG_123.jpg.xmp
@@ -482,31 +477,13 @@ export class MetadataService extends BaseService {
     return { width, height };
   }
 
-  private async getExifTags(asset: { id; files: AssetFile[]; type: AssetType }): Promise<ImmichTags> {
-    const originalFile = asset.files?.find((file) => file.type === AssetFileType.Original) ?? null;
-
-    if (!originalFile) {
-      throw new Error(`Asset ${asset.id} has no original file`);
-    }
-
-    if (asset.type === AssetType.Image) {
-      const hasSidecar = asset.files?.some(({ type }) => type === AssetFileType.Sidecar);
-
-      if (!hasSidecar) {
-        return this.metadataRepository.readTags(originalFile.path);
-      }
-    }
-
-    if (asset.files && asset.files.length > 1) {
-      throw new Error(`Asset ${originalFile.path} has multiple sidecar files`);
-    }
-
-    const sidecarFile = asset.files ? getAssetFiles(asset.files).sidecarFile : undefined;
+  private async getExifTags(asset: { originalPath: string; files: AssetFile[]; type: AssetType }): Promise<ImmichTags> {
+    const { sidecarFile } = getAssetFiles(asset.files);
 
     const [mediaTags, sidecarTags, videoTags] = await Promise.all([
-      this.metadataRepository.readTags(originalFile.path),
+      this.metadataRepository.readTags(asset.originalPath),
       sidecarFile ? this.metadataRepository.readTags(sidecarFile.path) : null,
-      asset.type === AssetType.Video ? this.getVideoTags(originalFile.path) : null,
+      asset.type === AssetType.Video ? this.getVideoTags(asset.originalPath) : null,
     ]);
 
     // prefer dates from sidecar tags
