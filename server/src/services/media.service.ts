@@ -284,7 +284,7 @@ export class MediaService extends BaseService {
       await this.assetRepository.update({ id: asset.id, ...generated.fullsizeDimensions });
     }
 
-    if (source == 'edit') {
+    if (source === 'edit') {
       // check if the edits modify faces or ocr
       const assetFaces = await this.personRepository.getFaces(asset.id, { onlyVisible: false });
       const ocrData = await this.ocrRepository.getByAssetId(asset.id, { onlyVisible: false });
@@ -352,7 +352,7 @@ export class MediaService extends BaseService {
     const extractEmbedded = image.extractEmbedded && mimeTypes.isRaw(asset.originalFileName);
     const extracted = extractEmbedded ? await this.extractImage(asset.originalPath, image.preview.size) : null;
     const generateFullsize =
-      (image.fullsize.enabled || asset.exifInfo.projectionType == 'EQUIRECTANGULAR') &&
+      (image.fullsize.enabled || asset.exifInfo.projectionType === 'EQUIRECTANGULAR') &&
       !mimeTypes.isWebSupportedImage(asset.originalPath);
     const convertFullsize = generateFullsize && (!extracted || !mimeTypes.isWebSupportedImage(` .${extracted.format}`));
 

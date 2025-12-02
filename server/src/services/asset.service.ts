@@ -506,7 +506,7 @@ export class AssetService extends BaseService {
       throw new BadRequestException('Only images can be edited');
     }
 
-    if (asset.livePhotoVideoId != null) {
+    if (asset.livePhotoVideoId !== null) {
       throw new BadRequestException('Editing live photos is not supported');
     }
 
