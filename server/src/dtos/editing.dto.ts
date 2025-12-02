@@ -1,7 +1,7 @@
 import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { ClassConstructor, plainToInstance, Transform, Type } from 'class-transformer';
 import { IsEnum, IsInt, Min, ValidateNested } from 'class-validator';
-import { ValidateUUID } from 'src/validation';
+import { IsAxisAlignedRotation, ValidateUUID } from 'src/validation';
 
 export enum EditAction {
   Crop = 'crop',
@@ -37,8 +37,8 @@ export class CropParameters {
 }
 
 export class RotateParameters {
-  @IsEnum([0, 90, 180, 270])
-  @ApiProperty({ enum: [0, 90, 180, 270], description: 'Rotation angle in degrees' })
+  @IsAxisAlignedRotation()
+  @ApiProperty({ description: 'Rotation angle in degrees' })
   angle!: number;
 }
 

@@ -571,7 +571,7 @@ export type EditActionCrop = {
 };
 export type RotateParameters = {
     /** Rotation angle in degrees */
-    angle: Angle;
+    angle: number;
 };
 export type EditActionRotate = {
     action: EditAction;
@@ -5447,12 +5447,6 @@ export enum EditAction {
     Crop = "crop",
     Rotate = "rotate",
     Mirror = "mirror"
-}
-export enum Angle {
-    $0 = 0,
-    $90 = 90,
-    $180 = 180,
-    $270 = 270
 }
 export enum MirrorAxis {
     Horizontal = "horizontal",

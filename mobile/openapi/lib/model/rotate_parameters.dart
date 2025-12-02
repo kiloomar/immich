@@ -17,7 +17,7 @@ class RotateParameters {
   });
 
   /// Rotation angle in degrees
-  RotateParametersAngleEnum angle;
+  num angle;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is RotateParameters &&
@@ -46,7 +46,7 @@ class RotateParameters {
       final json = value.cast<String, dynamic>();
 
       return RotateParameters(
-        angle: RotateParametersAngleEnum.parse('${json[r'angle']}'),
+        angle: num.parse('${json[r'angle']}'),
       );
     }
     return null;
@@ -97,84 +97,4 @@ class RotateParameters {
     'angle',
   };
 }
-
-/// Rotation angle in degrees
-class RotateParametersAngleEnum {
-  /// Instantiate a new enum with the provided [value].
-  const RotateParametersAngleEnum._(this.value);
-
-  /// The underlying value of this enum member.
-  final num value;
-
-  @override
-  String toString() => value.toString();
-
-  num toJson() => value;
-
-  static const n0 = RotateParametersAngleEnum._('0');
-  static const n90 = RotateParametersAngleEnum._('90');
-  static const n180 = RotateParametersAngleEnum._('180');
-  static const n270 = RotateParametersAngleEnum._('270');
-
-  /// List of all possible values in this [enum][RotateParametersAngleEnum].
-  static const values = <RotateParametersAngleEnum>[
-    n0,
-    n90,
-    n180,
-    n270,
-  ];
-
-  static RotateParametersAngleEnum? fromJson(dynamic value) => RotateParametersAngleEnumTypeTransformer().decode(value);
-
-  static List<RotateParametersAngleEnum> listFromJson(dynamic json, {bool growable = false,}) {
-    final result = <RotateParametersAngleEnum>[];
-    if (json is List && json.isNotEmpty) {
-      for (final row in json) {
-        final value = RotateParametersAngleEnum.fromJson(row);
-        if (value != null) {
-          result.add(value);
-        }
-      }
-    }
-    return result.toList(growable: growable);
-  }
-}
-
-/// Transformation class that can [encode] an instance of [RotateParametersAngleEnum] to num,
-/// and [decode] dynamic data back to [RotateParametersAngleEnum].
-class RotateParametersAngleEnumTypeTransformer {
-  factory RotateParametersAngleEnumTypeTransformer() => _instance ??= const RotateParametersAngleEnumTypeTransformer._();
-
-  const RotateParametersAngleEnumTypeTransformer._();
-
-  num encode(RotateParametersAngleEnum data) => data.value;
-
-  /// Decodes a [dynamic value][data] to a RotateParametersAngleEnum.
-  ///
-  /// If [allowNull] is true and the [dynamic value][data] cannot be decoded successfully,
-  /// then null is returned. However, if [allowNull] is false and the [dynamic value][data]
-  /// cannot be decoded successfully, then an [UnimplementedError] is thrown.
-  ///
-  /// The [allowNull] is very handy when an API changes and a new enum value is added or removed,
-  /// and users are still using an old app with the old code.
-  RotateParametersAngleEnum? decode(dynamic data, {bool allowNull = true}) {
-    if (data != null) {
-      switch (data) {
-        case '0': return RotateParametersAngleEnum.n0;
-        case '90': return RotateParametersAngleEnum.n90;
-        case '180': return RotateParametersAngleEnum.n180;
-        case '270': return RotateParametersAngleEnum.n270;
-        default:
-          if (!allowNull) {
-            throw ArgumentError('Unknown enum value to decode: $data');
-          }
-      }
-    }
-    return null;
-  }
-
-  /// Singleton [RotateParametersAngleEnumTypeTransformer] instance.
-  static RotateParametersAngleEnumTypeTransformer? _instance;
-}
-
 

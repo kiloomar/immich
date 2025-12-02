@@ -19231,12 +19231,6 @@
         "properties": {
           "angle": {
             "description": "Rotation angle in degrees",
-            "enum": [
-              0,
-              90,
-              180,
-              270
-            ],
             "type": "number"
           }
         },
