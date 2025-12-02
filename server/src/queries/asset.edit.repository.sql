@@ -15,3 +15,8 @@ from
   "asset_edit"
 where
   "assetId" = $1
+
+-- AssetEditRepository.deleteEditsForAsset
+delete from "asset_edit"
+where
+  "assetId" = $1
