@@ -497,6 +497,10 @@ export class AssetService extends BaseService {
   async editAsset(auth: AuthDto, id: string, dto: EditActionListDto): Promise<AssetEditsDto> {
     await this.requireAccess({ auth, permission: Permission.AssetEdit, ids: [id] });
 
+    if (dto.edits.length === 0) {
+      throw new BadRequestException('At least one edit action must be provided');
+    }
+
     const asset = await this.assetRepository.getById(id, { exifInfo: true });
     if (!asset) {
       throw new BadRequestException('Asset not found');

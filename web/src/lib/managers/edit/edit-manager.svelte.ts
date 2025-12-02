@@ -1,7 +1,7 @@
 import CropTool from '$lib/components/asset-viewer/editor/crop-tool/crop-tool.svelte';
 import { transformManager } from '$lib/managers/edit/transform-manager.svelte';
 import { waitForWebsocketEvent } from '$lib/stores/websocket';
-import { editAsset, type AssetEditsDto, type AssetResponseDto } from '@immich/sdk';
+import { editAsset, removeAssetEdits, type AssetEditsDto, type AssetResponseDto } from '@immich/sdk';
 import { ConfirmModal, modalManager, toastManager } from '@immich/ui';
 import { mdiCropRotate } from '@mdi/js';
 import type { Component } from 'svelte';
@@ -119,12 +119,14 @@ export class EditManager {
         10_000,
       );
 
-      await editAsset({
-        id: this.currentAsset!.id,
-        editActionListDto: {
-          edits,
-        },
-      });
+      await (edits.length === 0
+        ? removeAssetEdits({ id: this.currentAsset!.id })
+        : editAsset({
+            id: this.currentAsset!.id,
+            editActionListDto: {
+              edits,
+            },
+          }));
 
       const t = Date.now();
       await editCompleted;
