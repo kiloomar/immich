@@ -485,7 +485,7 @@ export class AssetService extends BaseService {
     }
   }
 
-  public async getAssetEdits(auth: AuthDto, id: string): Promise<AssetEditsDto> {
+  async getAssetEdits(auth: AuthDto, id: string): Promise<AssetEditsDto> {
     await this.requireAccess({ auth, permission: Permission.AssetRead, ids: [id] });
     const edits = await this.editRepository.getEditsForAsset(id);
     return {
@@ -494,7 +494,7 @@ export class AssetService extends BaseService {
     };
   }
 
-  public async editAsset(auth: AuthDto, id: string, dto: EditActionListDto): Promise<AssetEditsDto> {
+  async editAsset(auth: AuthDto, id: string, dto: EditActionListDto): Promise<AssetEditsDto> {
     await this.requireAccess({ auth, permission: Permission.AssetEdit, ids: [id] });
 
     const asset = await this.assetRepository.getById(id, { exifInfo: true });
