@@ -36,6 +36,7 @@ import {
   getAssetFiles,
   getDimensions,
   getMyPartnerIds,
+  isPanorama,
   onAfterUnlink,
   onBeforeLink,
   onBeforeUnlink,
@@ -514,12 +515,11 @@ export class AssetService extends BaseService {
       throw new BadRequestException('Editing live photos is not supported');
     }
 
-    const filename = asset.originalPath?.toLowerCase() || '';
-    if (asset.exifInfo?.projectionType === 'EQUIRECTANGULAR' || filename.endsWith('.insp')) {
+    if (isPanorama(asset)) {
       throw new BadRequestException('Editing panorama images is not supported');
     }
 
-    if (filename.endsWith('.gif')) {
+    if (asset.originalPath?.toLowerCase().endsWith('.gif')) {
       throw new BadRequestException('Editing GIF images is not supported');
     }
 
