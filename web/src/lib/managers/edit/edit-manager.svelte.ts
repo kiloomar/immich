@@ -114,8 +114,8 @@ export class EditManager {
     try {
       // Setup the websocket listener before sending the edit request
       const editCompleted = waitForWebsocketEvent(
-        'on_asset_edit_thumbnails',
-        (assetId) => assetId === this.currentAsset!.id,
+        'on_upload_success',
+        (asset) => asset.id === this.currentAsset!.id,
         10_000,
       );
 
