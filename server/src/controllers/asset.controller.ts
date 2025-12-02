@@ -199,7 +199,7 @@ export class AssetController {
     return this.service.deleteMetadataByKey(auth, id, key);
   }
 
-  @Put(':id/edit')
+  @Put(':id/edits')
   @Authenticated({ permission: Permission.AssetEdit })
   @Endpoint({
     summary: 'Applies edits to an existing asset',
@@ -214,7 +214,7 @@ export class AssetController {
     return this.service.editAsset(auth, id, dto);
   }
 
-  @Get(':id/edit')
+  @Get(':id/edits')
   @Authenticated({ permission: Permission.AssetRead })
   @Endpoint({
     summary: 'Retrieve edits for an existing asset',
