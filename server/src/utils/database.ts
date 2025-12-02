@@ -355,17 +355,6 @@ export const tokenizeForSearch = (text: string): string[] => {
   return tokens;
 };
 
-export function isEditedAsset<O>(qb: SelectQueryBuilder<DB, 'asset', O>, edited: boolean) {
-  return qb.where((eb) =>
-    eb.exists(
-      eb
-        .selectFrom('asset_file')
-        .whereRef('asset_file.assetId', '=', 'asset.id')
-        .where('asset_file.edited', '=', edited),
-    ),
-  );
-}
-
 // needed to properly type the return with the EditActionItem discriminated union type
 type AliasedEditActions = AliasedRawBuilder<EditActionItem[], 'edits'>;
 export function withEdits(eb: ExpressionBuilder<DB, 'asset'>): AliasedEditActions {
