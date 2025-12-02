@@ -195,12 +195,14 @@
     imageLoaded = true;
     assetFileUrl = imageLoaderUrl;
     originalImageLoaded = targetImageSize === AssetMediaSize.Fullsize || targetImageSize === 'original';
-    console.log('load', imageLoaderUrl, imageLoaded);
-    eventManager.emit('loaded');
+    console.log('RenderLoaded', imageLoaderUrl, imageLoaded);
+    eventManager.emit('RenderLoaded');
   };
 
   const onerror = () => {
     imageError = imageLoaded = true;
+    console.log('RenderLoaded err', imageLoaderUrl, imageLoaded);
+    eventManager.emit('RenderLoaded');
   };
 
   $effect(() => {

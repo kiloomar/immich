@@ -47,6 +47,8 @@ export type Events = {
   TransitionToAssetViewer: [];
   AssetViewerLoaded: [];
 
+  RenderLoaded: [];
+
   BeforeStartViewTransition: [];
   Finished: [];
   Ready: [];

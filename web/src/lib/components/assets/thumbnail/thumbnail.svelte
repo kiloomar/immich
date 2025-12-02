@@ -211,9 +211,7 @@
       document.removeEventListener('pointermove', moveHandler, true);
     };
   });
-  onDestroy(() => {
-    console.log(asset.id);
-  });
+  onDestroy(() => {});
 
   let transitionToAssetViewer = $state(false);
   let rect = $state<DOMRect>();

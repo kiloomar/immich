@@ -41,6 +41,7 @@
   import { fly, slide } from 'svelte/transition';
 
   import { eventManager } from '$lib/managers/event-manager.svelte';
+  import { viewTransitionManager } from '$lib/managers/ViewTransitionManager.svelte';
   import Thumbnail from '../assets/thumbnail/thumbnail.svelte';
   import ActivityStatus from './activity-status.svelte';
   import ActivityViewer from './activity-viewer.svelte';
@@ -164,15 +165,31 @@
   console.log('on create - assetviwer');
 
   let transitionName = $state<string | null>('good');
+
   $inspect(transitionName).with((a, b) => console.log('trans', a, b));
   $inspect(asset).with(console.log);
+  let addInfoTransition;
+  let finished;
   onMount(async () => {
+    debugger;
+    addInfoTransition = () => {
+      console.log('adding info');
+      detailPanelTransitionName = 'info';
+    };
+    eventManager.on('TransitionToAssetViewer', addInfoTransition);
+    eventManager.on('TransitionToTimeline', addInfoTransition);
+    finished = () => {
+      console.log('removing info');
+      detailPanelTransitionName = null;
+      transitionName = null;
+      console.log('clearning tasnition name in asset viwer');
+    };
+    eventManager.on('Finished', finished);
+
     console.log('on mount - assetviwer');
     eventManager.emit('AssetViewerLoaded');
     eventManager.on('Finished', () => {
       debugger;
-      transitionName = null;
-      console.log('clearning tasnition name in asset viwer');
     });
     unsubscribes.push(
       websocketEvents.on('on_upload_success', (asset) => onAssetUpdate({ event: 'upload', asset })),
@@ -215,6 +232,10 @@
     }
 
     activityManager.reset();
+    console.log('offing');
+    eventManager.off('TransitionToAssetViewer', addInfoTransition!);
+    eventManager.off('TransitionToTimeline', addInfoTransition!);
+    eventManager.off('Finished', finished!);
   });
 
   const handleGetAllAlbums = async () => {
@@ -260,31 +281,40 @@
         return;
       }
     }
+
     transitionName = order;
+    detailPanelTransitionName = 'onTop';
 
-    const navigatingPromise = new Promise((resolve) => {
-      eventManager.once('loaded', () => {
-        resolve();
-      });
+    viewTransitionManager.startTransition(
+      new Promise<void>((resolve) => {
+        eventManager.once('RenderLoaded', () => {
+          resolve();
+        });
+      }),
+    );
+    // const navigatingPromise = new Promise((resolve) => {
+    //   eventManager.once('loaded', () => {
+    //     resolve();
+    //   });
 
-      console.log('BEFORE VIEW TRANS');
-      debugger;
-      const transition = document.startViewTransition(async () => {
-        console.log('IN VIEW TRANS');
-        console.log('emit', 'StartViewTransition');
-        eventManager.emit('StartViewTransition');
-        console.log('starting');
-        debugger;
+    //   console.log('BEFORE VIEW TRANS');
+    //   debugger;
+    //   const transition = document.startViewTransition(async () => {
+    //     console.log('IN VIEW TRANS');
+    //     console.log('emit', 'StartViewTransition');
+    //     eventManager.emit('StartViewTransition');
+    //     console.log('starting');
+    //     debugger;
 
-        await navigatingPromise;
-        debugger;
-        console.log('AFTER VIEW TRANS!');
-      });
-      transition.updateCallbackDone.then(() => {
-        console.log('DONE VIEW TRANS!');
-        eventManager.emit('EndViewTransition');
-      });
-    });
+    //     await navigatingPromise;
+    //     debugger;
+    //     console.log('AFTER VIEW TRANS!');
+    //   });
+    //   transition.updateCallbackDone.then(() => {
+    //     console.log('DONE VIEW TRANS!');
+    //     eventManager.emit('EndViewTransition');
+    //   });
+    // });
 
     e?.stopPropagation();
 
@@ -311,6 +341,9 @@
       }
     }
   };
+  onDestroy(() => {
+    console.log('destryo');
+  });
 
   // const showEditorHandler = () => {
   //   if (isShowActivity) {
@@ -447,6 +480,7 @@
     }
   });
   let viewerHeight = $state<number>(0);
+  let detailPanelTransitionName = $state<string | null>(null);
 </script>
 
 <OnEvents onAssetReplace={handleAssetReplace} />
@@ -626,7 +660,7 @@
     <div
       transition:slide={{ axis: 'x', duration: 150 }}
       id="detail-panel"
-      style:view-transition-name="info"
+      style:view-transition-name={detailPanelTransitionName}
       class="row-start-1 row-span-4 w-[360px] overflow-y-auto transition-all dark:border-l dark:border-s-immich-dark-gray bg-light"
       translate="yes"
     >

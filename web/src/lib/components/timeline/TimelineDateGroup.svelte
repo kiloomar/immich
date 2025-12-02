@@ -16,7 +16,7 @@
   import { fromTimelinePlainDate, getDateLocaleString } from '$lib/utils/timeline-util';
   import { Icon } from '@immich/ui';
   import { mdiCheckCircle, mdiCircleOutline } from '@mdi/js';
-  import { type Snippet } from 'svelte';
+  import { tick, type Snippet } from 'svelte';
 
   let { isUploading } = uploadAssetsStore;
   let { isViewing: showAssetViewer } = assetViewingStore;
@@ -250,7 +250,13 @@
               // tag  target on the 'old' snaptho
               animationTargetAssetId = asset.id;
               viewTransitionManager.startTransition(
-                new Promise<void>((resolve) => eventManager.once('AssetViewerLoaded', () => resolve())),
+                new Promise<void>((resolve) =>
+                  eventManager.once('AssetViewerLoaded', () => {
+                    eventManager.emit('TransitionToAssetViewer');
+                    tick().then(resolve, () => void 0);
+                    // resolve();
+                  }),
+                ),
               );
 
               eventManager.once('StartViewTransition', () => {
@@ -321,6 +327,11 @@
   :global(::view-transition-new(info)) {
     animation: 250ms ease-in 0s flyInRight forwards;
   }
+  :global(::view-transition-old(onTop)),
+  :global(::view-transition-new(onTop)) {
+    z-index: 1000000;
+    animation: none;
+  }
 
   :global(::view-transition-old(*)) {
     /* z-index: 10000; */
@@ -345,20 +356,28 @@
     /* z-index: 10000; */
     animation: 350ms flyOutLeft;
     transform-origin: center;
+    height: 100%;
+    object-fit: contain;
   }
   :global(::view-transition-new(next)) {
     animation: 350ms flyInRight;
     transform-origin: center;
+    height: 100%;
+    object-fit: contain;
   }
 
   :global(::view-transition-old(previous)) {
     /* z-index: 10000; */
     animation: 350ms flyOutRight;
     transform-origin: center;
+    height: 100%;
+    object-fit: contain;
   }
   :global(::view-transition-new(previous)) {
     animation: 350ms flyInLeft;
     transform-origin: center;
+    height: 100%;
+    object-fit: contain;
   }
 
   @keyframes -global-flyInLeft {
