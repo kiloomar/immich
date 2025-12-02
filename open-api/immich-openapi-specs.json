@@ -3187,7 +3187,54 @@
         "x-immich-state": "Stable"
       }
     },
-    "/assets/{id}/edit": {
+    "/assets/{id}/edits": {
+      "delete": {
+        "description": "Removes all edit actions (crop, rotate, mirror) associated with the specified asset.",
+        "operationId": "removeAssetEdits",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Remove edits from an existing asset",
+        "tags": [
+          "Assets"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v2",
+            "state": "Added"
+          },
+          {
+            "version": "v2",
+            "state": "Beta"
+          }
+        ],
+        "x-immich-permission": "asset.edit",
+        "x-immich-state": "Beta"
+      },
       "get": {
         "description": "Retrieve a series of edit actions (crop, rotate, mirror) associated with the specified asset.",
         "operationId": "getAssetEdits",

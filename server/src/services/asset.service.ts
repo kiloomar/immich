@@ -557,4 +557,19 @@ export class AssetService extends BaseService {
       edits: dto.edits,
     };
   }
+
+  async removeAssetEdits(auth: AuthDto, id: string): Promise<void> {
+    await this.requireAccess({ auth, permission: Permission.AssetEdit, ids: [id] });
+
+    const asset = await this.assetRepository.getById(id);
+    if (!asset) {
+      throw new BadRequestException('Asset not found');
+    }
+
+    await this.editRepository.deleteEditsForAsset(id);
+    await this.jobRepository.queue({
+      name: JobName.AssetGenerateThumbnails,
+      data: { id, source: 'edit', notify: true },
+    });
+  }
 }

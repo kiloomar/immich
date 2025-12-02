@@ -2567,6 +2567,17 @@ export function updateAsset({ id, updateAssetDto }: {
     })));
 }
 /**
+ * Remove edits from an existing asset
+ */
+export function removeAssetEdits({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/assets/${encodeURIComponent(id)}/edits`, {
+        ...opts,
+        method: "DELETE"
+    }));
+}
+/**
  * Retrieve edits for an existing asset
  */
 export function getAssetEdits({ id }: {
@@ -2575,7 +2586,7 @@ export function getAssetEdits({ id }: {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
         data: AssetEditsDto;
-    }>(`/assets/${encodeURIComponent(id)}/edit`, {
+    }>(`/assets/${encodeURIComponent(id)}/edits`, {
         ...opts
     }));
 }
@@ -2589,7 +2600,7 @@ export function editAsset({ id, editActionListDto }: {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
         data: AssetEditsDto;
-    }>(`/assets/${encodeURIComponent(id)}/edit`, oazapfts.json({
+    }>(`/assets/${encodeURIComponent(id)}/edits`, oazapfts.json({
         ...opts,
         method: "PUT",
         body: editActionListDto

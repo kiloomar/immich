@@ -224,4 +224,16 @@ export class AssetController {
   getAssetEdits(@Auth() auth: AuthDto, @Param() { id }: UUIDParamDto): Promise<AssetEditsDto> {
     return this.service.getAssetEdits(auth, id);
   }
+
+  @Delete(':id/edits')
+  @Authenticated({ permission: Permission.AssetEdit })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Endpoint({
+    summary: 'Remove edits from an existing asset',
+    description: 'Removes all edit actions (crop, rotate, mirror) associated with the specified asset.',
+    history: new HistoryBuilder().added('v2').beta('v2'),
+  })
+  removeAssetEdits(@Auth() auth: AuthDto, @Param() { id }: UUIDParamDto): Promise<void> {
+    return this.service.removeAssetEdits(auth, id);
+  }
 }

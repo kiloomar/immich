@@ -35,4 +35,11 @@ export class AssetEditRepository {
       .where('assetId', '=', assetId)
       .execute() as Promise<EditActionItem[]>;
   }
+
+  @GenerateSql({
+    params: [DummyValue.UUID],
+  })
+  async deleteEditsForAsset(assetId: string): Promise<void> {
+    await this.db.deleteFrom('asset_edit').where('assetId', '=', assetId).execute();
+  }
 }

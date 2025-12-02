@@ -370,7 +370,7 @@ class AssetsApi {
   /// * [EditActionListDto] editActionListDto (required):
   Future<Response> editAssetWithHttpInfo(String id, EditActionListDto editActionListDto,) async {
     // ignore: prefer_const_declarations
-    final apiPath = r'/assets/{id}/edit'
+    final apiPath = r'/assets/{id}/edits'
       .replaceAll('{id}', id);
 
     // ignore: prefer_final_locals
@@ -489,7 +489,7 @@ class AssetsApi {
   /// * [String] id (required):
   Future<Response> getAssetEditsWithHttpInfo(String id,) async {
     // ignore: prefer_const_declarations
-    final apiPath = r'/assets/{id}/edit'
+    final apiPath = r'/assets/{id}/edits'
       .replaceAll('{id}', id);
 
     // ignore: prefer_final_locals
@@ -996,6 +996,55 @@ class AssetsApi {
     
     }
     return null;
+  }
+
+  /// Remove edits from an existing asset
+  ///
+  /// Removes all edit actions (crop, rotate, mirror) associated with the specified asset.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] id (required):
+  Future<Response> removeAssetEditsWithHttpInfo(String id,) async {
+    // ignore: prefer_const_declarations
+    final apiPath = r'/assets/{id}/edits'
+      .replaceAll('{id}', id);
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      apiPath,
+      'DELETE',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Remove edits from an existing asset
+  ///
+  /// Removes all edit actions (crop, rotate, mirror) associated with the specified asset.
+  ///
+  /// Parameters:
+  ///
+  /// * [String] id (required):
+  Future<void> removeAssetEdits(String id,) async {
+    final response = await removeAssetEditsWithHttpInfo(id,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
   }
 
   /// Replace asset
