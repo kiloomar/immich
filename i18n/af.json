@@ -97,7 +97,6 @@
     "job_not_concurrency_safe": "Hierdie taak kan nie gelyktydig uitgevoer word nie.",
     "job_settings": "Agtergrondtaakinstellings",
     "job_settings_description": "Bestuur werkgelyktydigheid",
-    "job_status": "Werkstatus",
     "library_created": "Biblioteek geskep: {library}",
     "library_deleted": "Biblioteek verwyder",
     "library_scanning": "Periodieke Soek",

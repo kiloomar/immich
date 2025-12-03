@@ -103,7 +103,6 @@
     "job_not_concurrency_safe": "Kan ikke trygt utføre jobben samstundes.",
     "job_settings": "Jobbinnstillingar",
     "job_settings_description": "Handsam samstundes utføring av jobber",
-    "job_status": "Jobbstatus",
     "jobs_delayed": "{jobCount, plural, other {# forsinka}}",
     "jobs_failed": "{jobCount, plural, other {# mislykkast}}",
     "library_created": "Opprett bibliotek: {library}",
