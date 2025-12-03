@@ -1,5 +1,17 @@
+<script lang="ts" module>
+  export class AppState {
+    #isAssetViewer = $state<boolean>(false);
+    set isAssetViewer(value) {
+      this.#isAssetViewer = value;
+    }
+    get isAssetViewer() {
+      return this.#isAssetViewer;
+    }
+  }
+</script>
+
 <script lang="ts">
-  import { afterNavigate, beforeNavigate } from '$app/navigation';
+  import { afterNavigate, beforeNavigate, goto, onNavigate } from '$app/navigation';
   import { page } from '$app/state';
   import { shortcut } from '$lib/actions/shortcut';
   import DownloadPanel from '$lib/components/asset-viewer/download-panel.svelte';
@@ -11,6 +23,7 @@
   import { AppRoute } from '$lib/constants';
   import { eventManager } from '$lib/managers/event-manager.svelte';
   import { serverConfigManager } from '$lib/managers/server-config-manager.svelte';
+  import { themeManager } from '$lib/managers/theme-manager.svelte';
   import ServerRestartingModal from '$lib/modals/ServerRestartingModal.svelte';
   import VersionAnnouncementModal from '$lib/modals/VersionAnnouncementModal.svelte';
   import { user } from '$lib/stores/user.store';
@@ -19,10 +32,10 @@
   import { copyToClipboard, getReleaseType, semverToName } from '$lib/utils';
   import { maintenanceShouldRedirect } from '$lib/utils/maintenance';
   import { isAssetViewerRoute } from '$lib/utils/navigation';
-  import { modalManager, setTranslations } from '@immich/ui';
-  import { onMount, type Snippet } from 'svelte';
+  import { CommandPaletteContext, modalManager, setTranslations, type ActionItem } from '@immich/ui';
+  import { mdiAccountMultipleOutline, mdiBookshelf, mdiCog, mdiServer, mdiSync, mdiThemeLightDark } from '@mdi/js';
+  import { onMount, setContext, type Snippet } from 'svelte';
   import { t } from 'svelte-i18n';
-  import { run } from 'svelte/legacy';
   import '../app.css';
 
   interface Props {
@@ -47,6 +60,10 @@
 
   let showNavigationLoadingBar = $state(false);
 
+  const appState = new AppState();
+  appState.isAssetViewer = isAssetViewerRoute(page);
+  setContext('AppState', appState);
+
   const getMyImmichLink = () => {
     return new URL(page.url.pathname + page.url.search, 'https://my.immich.app');
   };
@@ -66,10 +83,17 @@
     showNavigationLoadingBar = true;
   });
 
-  afterNavigate(() => {
-    showNavigationLoadingBar = false;
+  onNavigate(({ to }) => {
+    appState.isAssetViewer = isAssetViewerRoute(to) ? true : false;
   });
-  run(() => {
+  afterNavigate(({ to, complete }) => {
+    appState.isAssetViewer = isAssetViewerRoute(to) ? true : false;
+    void complete.finally(() => {
+      showNavigationLoadingBar = false;
+    });
+  });
+
+  $effect.pre(() => {
     if ($user || page.url.pathname.startsWith(AppRoute.MAINTENANCE)) {
       openWebsocketConnection();
     } else {
@@ -120,9 +144,57 @@
       });
     }
   });
+
+  const userCommands: ActionItem[] = [
+    {
+      title: $t('theme'),
+      description: $t('toggle_theme_description'),
+      type: $t('command'),
+      icon: mdiThemeLightDark,
+      onAction: () => themeManager.toggleTheme(),
+      shortcuts: { shift: true, key: 't' },
+      isGlobal: true,
+    },
+  ];
+
+  const adminCommands: ActionItem[] = [
+    {
+      title: $t('users'),
+      description: $t('admin.users_page_description'),
+      icon: mdiAccountMultipleOutline,
+      onAction: () => goto(AppRoute.ADMIN_USERS),
+    },
+    {
+      title: $t('jobs'),
+      description: $t('admin.jobs_page_description'),
+      icon: mdiSync,
+      onAction: () => goto(AppRoute.ADMIN_JOBS),
+    },
+    {
+      title: $t('settings'),
+      description: $t('admin.jobs_page_description'),
+      icon: mdiCog,
+      onAction: () => goto(AppRoute.ADMIN_SETTINGS),
+    },
+    {
+      title: $t('external_libraries'),
+      description: $t('admin.external_libraries_page_description'),
+      icon: mdiBookshelf,
+      onAction: () => goto(AppRoute.ADMIN_LIBRARY_MANAGEMENT),
+    },
+    {
+      title: $t('server_stats'),
+      description: $t('admin.server_stats_page_description'),
+      icon: mdiServer,
+      onAction: () => goto(AppRoute.ADMIN_STATS),
+    },
+  ].map((route) => ({ ...route, type: $t('page'), isGlobal: true, $if: () => $user?.isAdmin }));
+
+  const commands = $derived([...userCommands, ...adminCommands]);
 </script>
 
 <OnEvents {onReleaseEvent} />
+<CommandPaletteContext {commands} />
 
 <svelte:head>
   <title>{page.data.meta?.title || 'Web'} - Immich</title>

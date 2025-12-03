@@ -85,11 +85,8 @@
 
   const handleClose = async (asset: { id: string }) => {
     const awaitInit = new Promise<void>((resolve) => eventManager.once('StartViewTransition', resolve));
-    console.log('emit back to timeline');
     eventManager.emit('TransitionToTimeline', { id: asset.id });
-    console.log('waitint for init');
     await awaitInit;
-    console.log('done with  for init');
 
     assetViewingStore.showAssetViewer(false);
     invisible = true;

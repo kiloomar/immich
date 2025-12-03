@@ -11,6 +11,7 @@
   import { fade, fly } from 'svelte/transition';
 
   interface Props {
+    invisible: boolean;
     /** Offset from the top of the timeline (e.g., for headers) */
     timelineTopOffset?: number;
     /** Offset from the bottom of the timeline (e.g., for footers) */
@@ -39,6 +40,7 @@
   }
 
   let {
+    invisible = false,
     timelineTopOffset = 0,
     timelineBottomOffset = 0,
     height = 0,
@@ -351,7 +353,10 @@
     void onScrub?.(scrubData);
   };
   const getTouch = (event: TouchEvent) => {
+    // desktop safari does not support this since Apple does not have desktop touch devices
+    // eslint-disable-next-line tscompat/tscompat
     if (event.touches.length === 1) {
+      // eslint-disable-next-line tscompat/tscompat
       return event.touches[0];
     }
     return null;
@@ -362,6 +367,8 @@
       isHover = false;
       return;
     }
+    // desktop safari does not support this since Apple does not have desktop touch devices
+    // eslint-disable-next-line tscompat/tscompat
     const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
     const isHoverScrollbar =
       findElementBestY(elements, 0, 'scrubber', 'time-label', 'lead-in', 'lead-out') !== undefined;
@@ -370,6 +377,7 @@
 
     if (isHoverScrollbar) {
       handleMouseEvent({
+        // eslint-disable-next-line tscompat/tscompat
         clientY: touch.clientY,
         isDragging: true,
       });
@@ -388,6 +396,7 @@
     const touch = getTouch(event);
     if (touch && isDragging) {
       handleMouseEvent({
+        // eslint-disable-next-line tscompat/tscompat
         clientY: touch.clientY,
       });
     } else {
@@ -501,6 +510,7 @@
   aria-valuemin={toScrollY(0)}
   data-id="scrubber"
   class="absolute end-0 z-1 select-none hover:cursor-row-resize"
+  class:invisible
   style:padding-top={PADDING_TOP + 'px'}
   style:padding-bottom={PADDING_BOTTOM + 'px'}
   style:width

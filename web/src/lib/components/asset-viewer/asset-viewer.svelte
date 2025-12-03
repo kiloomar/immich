@@ -162,35 +162,22 @@
     }
   };
 
-  console.log('on create - assetviwer');
+  let transitionName = $state<string | null>('hero');
 
-  let transitionName = $state<string | null>('good');
-
-  $inspect(transitionName).with((a, b) => console.log('trans', a, b));
-  $inspect(asset).with(console.log);
   let addInfoTransition;
   let finished;
   onMount(async () => {
-    debugger;
     addInfoTransition = () => {
-      console.log('adding info');
       detailPanelTransitionName = 'info';
     };
     eventManager.on('TransitionToAssetViewer', addInfoTransition);
     eventManager.on('TransitionToTimeline', addInfoTransition);
     finished = () => {
-      console.log('removing info');
       detailPanelTransitionName = null;
       transitionName = null;
-      console.log('clearning tasnition name in asset viwer');
     };
     eventManager.on('Finished', finished);
-
-    console.log('on mount - assetviwer');
     eventManager.emit('AssetViewerLoaded');
-    eventManager.on('Finished', () => {
-      debugger;
-    });
     unsubscribes.push(
       websocketEvents.on('on_upload_success', (asset) => onAssetUpdate({ event: 'upload', asset })),
       websocketEvents.on('on_asset_update', (asset) => onAssetUpdate({ event: 'update', asset })),
@@ -232,7 +219,6 @@
     }
 
     activityManager.reset();
-    console.log('offing');
     eventManager.off('TransitionToAssetViewer', addInfoTransition!);
     eventManager.off('TransitionToTimeline', addInfoTransition!);
     eventManager.off('Finished', finished!);
@@ -263,7 +249,7 @@
   };
 
   const closeViewer = () => {
-    transitionName = 'good';
+    transitionName = 'hero';
     onClose(asset);
   };
 
@@ -292,29 +278,6 @@
         });
       }),
     );
-    // const navigatingPromise = new Promise((resolve) => {
-    //   eventManager.once('loaded', () => {
-    //     resolve();
-    //   });
-
-    //   console.log('BEFORE VIEW TRANS');
-    //   debugger;
-    //   const transition = document.startViewTransition(async () => {
-    //     console.log('IN VIEW TRANS');
-    //     console.log('emit', 'StartViewTransition');
-    //     eventManager.emit('StartViewTransition');
-    //     console.log('starting');
-    //     debugger;
-
-    //     await navigatingPromise;
-    //     debugger;
-    //     console.log('AFTER VIEW TRANS!');
-    //   });
-    //   transition.updateCallbackDone.then(() => {
-    //     console.log('DONE VIEW TRANS!');
-    //     eventManager.emit('EndViewTransition');
-    //   });
-    // });
 
     e?.stopPropagation();
 
@@ -341,9 +304,6 @@
       }
     }
   };
-  onDestroy(() => {
-    console.log('destryo');
-  });
 
   // const showEditorHandler = () => {
   //   if (isShowActivity) {
@@ -471,16 +431,17 @@
     }
   });
 
-  let currentAssetId = $derived(asset.id);
+  // primarily, this is reactive on `asset`
   $effect(() => {
-    if (currentAssetId) {
-      untrack(() => handlePromiseError(handleGetAllAlbums()));
-      ocrManager.clear();
-      handlePromiseError(ocrManager.getAssetOcr(currentAssetId));
+    handlePromiseError(handleGetAllAlbums());
+    ocrManager.clear();
+    if (!sharedLink) {
+      handlePromiseError(ocrManager.getAssetOcr(asset.id));
     }
   });
   let viewerHeight = $state<number>(0);
   let detailPanelTransitionName = $state<string | null>(null);
+  let loaded = $state(false);
 </script>
 
 <OnEvents onAssetReplace={handleAssetReplace} />
@@ -496,7 +457,10 @@
 >
   <!-- Top navigation bar -->
   {#if $slideshowState === SlideshowState.None && !isShowEditor}
-    <div class="col-span-4 col-start-1 row-span-1 row-start-1 transition-transform">
+    <div
+      class="col-span-4 col-start-1 row-span-1 row-start-1 transition-transform"
+      style:view-transition-name="exclude"
+    >
       <AssetViewerNavBar
         {asset}
         {album}
@@ -550,13 +514,16 @@
       bind:clientHeight={viewerHeight}
       class="z-[-1] relative col-start-1 col-span-4 row-start-1 row-span-full flex items-center"
     >
-      <div data-transition-asset style:view-transition-name={transitionName} class="grow">
+      <div data-transition-asset style:view-transition-name={transitionName} class={['mx-auto max-h-dvh']}>
         {#if previewStackedAsset}
           {#key previewStackedAsset.id}
             {#if previewStackedAsset.type === AssetTypeEnum.Image}
               <PhotoViewer
                 bind:zoomToggle
                 bind:copyImage
+                onPhotoLoaded={() => {
+                  loaded = true;
+                }}
                 asset={previewStackedAsset}
                 {preloadAssets}
                 onPreviousAsset={() => navigateAsset('previous')}
@@ -596,13 +563,16 @@
               {:else if asset.exifInfo?.projectionType === ProjectionType.EQUIRECTANGULAR || (asset.originalPath && asset.originalPath
                     .toLowerCase()
                     .endsWith('.insp'))}
-                <ImagePanoramaViewer {viewerHeight} {asset} />
+                <ImagePanoramaViewer {viewerHeight} bind:zoomToggle {asset} />
               {:else if isShowEditor && selectedEditType === 'crop'}
                 <CropArea {asset} />
               {:else}
                 <PhotoViewer
                   bind:zoomToggle
                   bind:copyImage
+                  onPhotoLoaded={() => {
+                    loaded = true;
+                  }}
                   {asset}
                   {preloadAssets}
                   onPreviousAsset={() => navigateAsset('previous')}
