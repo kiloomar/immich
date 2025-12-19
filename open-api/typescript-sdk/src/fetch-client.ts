@@ -1583,6 +1583,7 @@ export type SystemConfigStorageTemplateDto = {
     enabled: boolean;
     hashVerificationEnabled: boolean;
     template: string;
+    timezone: string;
 };
 export type SystemConfigTemplateEmailsDto = {
     albumInviteTemplate: string;
@@ -1632,6 +1633,7 @@ export type SystemConfigTemplateStorageOptionDto = {
     monthOptions: string[];
     presetOptions: string[];
     secondOptions: string[];
+    timezoneOptions: string[];
     weekOptions: string[];
     yearOptions: string[];
 };
