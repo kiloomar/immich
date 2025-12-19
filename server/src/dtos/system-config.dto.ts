@@ -545,6 +545,9 @@ class SystemConfigStorageTemplateDto {
   @IsNotEmpty()
   @IsString()
   template!: string;
+
+  @IsString()
+  timezone!: string;
 }
 
 export class SystemConfigTemplateStorageOptionDto {
@@ -556,6 +559,7 @@ export class SystemConfigTemplateStorageOptionDto {
   minuteOptions!: string[];
   secondOptions!: string[];
   presetOptions!: string[];
+  timezoneOptions!: string[];
 }
 
 export class SystemConfigThemeDto {
