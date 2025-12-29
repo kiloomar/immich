@@ -54,6 +54,7 @@ const storagePresets = [
   '{{y}}/{{y}}-{{MM}}/{{assetId}}',
   '{{y}}/{{y}}-{{WW}}/{{assetId}}',
   '{{album}}/{{filename}}',
+  '{{make}}/{{model}}/{{lensModel}}/{{filename}}',
 ];
 
 export interface MoveAssetMetadata {
@@ -68,6 +69,9 @@ interface RenderMetadata {
   albumName: string | null;
   albumStartDate: Date | null;
   albumEndDate: Date | null;
+  make: string | null;
+  model: string | null;
+  lensModel: string | null;
 }
 
 @Injectable()
@@ -116,6 +120,9 @@ export class StorageTemplateService extends BaseService {
         albumName: 'album',
         albumStartDate: new Date(),
         albumEndDate: new Date(),
+        make: 'FUJIFILM',
+        model: 'X-T50',
+        lensModel: 'XF27mm F2.8 R WR',
       });
     } catch (error) {
       this.logger.warn(`Storage template validation failed: ${JSON.stringify(error)}`);
@@ -302,6 +309,9 @@ export class StorageTemplateService extends BaseService {
         albumName,
         albumStartDate,
         albumEndDate,
+        make: asset.make,
+        model: asset.model,
+        lensModel: asset.lensModel,
       });
       const fullPath = path.normalize(path.join(rootPath, storagePath));
       let destination = `${fullPath}.${extension}`;
@@ -376,6 +386,9 @@ export class StorageTemplateService extends BaseService {
       assetIdShort: asset.id.slice(-12),
       //just throw into the root if it doesn't belong to an album
       album: (albumName && sanitize(albumName.replaceAll(/\.+/g, ''))) || '',
+      make: make ?? '',
+      model: model ?? '',
+      lensModel: lensModel ?? '',
     };
 
     const { storageTemplate } = await this.getConfig({ withCache: true });
