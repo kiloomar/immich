@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import handlebar from 'handlebars';
+import { isEmpty } from 'lodash';
 import { DateTime } from 'luxon';
 import path from 'node:path';
 import sanitize from 'sanitize-filename';
@@ -100,10 +101,10 @@ export class StorageTemplateService extends BaseService {
   }
 
   @OnEvent({ name: 'ConfigValidate' })
-  onConfigValidate({ newConfig }: ArgOf<'ConfigValidate'>) {
+  async onConfigValidate({ newConfig }: ArgOf<'ConfigValidate'>) {
     try {
       const { compiled } = this.compile(newConfig.storageTemplate.template);
-      this.render(compiled, {
+      await this.render(compiled, {
         asset: {
           fileCreatedAt: new Date(),
           originalPath: '/upload/test/IMG_123.jpg',
@@ -123,7 +124,7 @@ export class StorageTemplateService extends BaseService {
   }
 
   getStorageTemplateOptions(): SystemConfigTemplateStorageOptionDto {
-    return { ...storageTokens, presetOptions: storagePresets };
+    return { ...storageTokens, presetOptions: storagePresets, timezoneOptions: Intl.supportedValuesOf('timeZone') };
   }
 
   @OnEvent({ name: 'AssetMetadataExtracted' })
@@ -294,7 +295,7 @@ export class StorageTemplateService extends BaseService {
         }
       }
 
-      const storagePath = this.render(this.template.compiled, {
+      const storagePath = await this.render(this.template.compiled, {
         asset,
         filename: sanitized,
         extension,
@@ -364,7 +365,7 @@ export class StorageTemplateService extends BaseService {
     };
   }
 
-  private render(template: HandlebarsTemplateDelegate<any>, options: RenderMetadata) {
+  private async render(template: HandlebarsTemplateDelegate<any>, options: RenderMetadata) {
     const { filename, extension, asset, albumName, albumStartDate, albumEndDate } = options;
     const substitutions: Record<string, string> = {
       filename,
@@ -377,8 +378,10 @@ export class StorageTemplateService extends BaseService {
       album: (albumName && sanitize(albumName.replaceAll(/\.+/g, ''))) || '',
     };
 
+    const { storageTemplate } = await this.getConfig({ withCache: true });
+
     const systemTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const zone = asset.timeZone || systemTimeZone;
+    const zone = isEmpty(storageTemplate.timezone) ? asset.timeZone || systemTimeZone : storageTemplate.timezone;
     const dt = DateTime.fromJSDate(asset.fileCreatedAt, { zone });
 
     for (const token of Object.values(storageTokens).flat()) {
@@ -393,7 +396,6 @@ export class StorageTemplateService extends BaseService {
           : '';
       }
     }
-
     return template(substitutions).replaceAll(/\/{2,}/gm, '/');
   }
 }
