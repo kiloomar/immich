@@ -21977,12 +21977,16 @@
           },
           "template": {
             "type": "string"
+          },
+          "timezone": {
+            "type": "string"
           }
         },
         "required": [
           "enabled",
           "hashVerificationEnabled",
-          "template"
+          "template",
+          "timezone"
         ],
         "type": "object"
       },
@@ -22043,6 +22047,12 @@
             },
             "type": "array"
           },
+          "timezoneOptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "weekOptions": {
             "items": {
               "type": "string"
@@ -22063,6 +22073,7 @@
           "monthOptions",
           "presetOptions",
           "secondOptions",
+          "timezoneOptions",
           "weekOptions",
           "yearOptions"
         ],

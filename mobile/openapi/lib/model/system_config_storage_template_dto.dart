@@ -16,6 +16,7 @@ class SystemConfigStorageTemplateDto {
     required this.enabled,
     required this.hashVerificationEnabled,
     required this.template,
+    required this.timezone,
   });
 
   bool enabled;
@@ -24,27 +25,32 @@ class SystemConfigStorageTemplateDto {
 
   String template;
 
+  String timezone;
+
   @override
   bool operator ==(Object other) => identical(this, other) || other is SystemConfigStorageTemplateDto &&
     other.enabled == enabled &&
     other.hashVerificationEnabled == hashVerificationEnabled &&
-    other.template == template;
+    other.template == template &&
+    other.timezone == timezone;
 
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
     (enabled.hashCode) +
     (hashVerificationEnabled.hashCode) +
-    (template.hashCode);
+    (template.hashCode) +
+    (timezone.hashCode);
 
   @override
-  String toString() => 'SystemConfigStorageTemplateDto[enabled=$enabled, hashVerificationEnabled=$hashVerificationEnabled, template=$template]';
+  String toString() => 'SystemConfigStorageTemplateDto[enabled=$enabled, hashVerificationEnabled=$hashVerificationEnabled, template=$template, timezone=$timezone]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
       json[r'enabled'] = this.enabled;
       json[r'hashVerificationEnabled'] = this.hashVerificationEnabled;
       json[r'template'] = this.template;
+      json[r'timezone'] = this.timezone;
     return json;
   }
 
@@ -60,6 +66,7 @@ class SystemConfigStorageTemplateDto {
         enabled: mapValueOfType<bool>(json, r'enabled')!,
         hashVerificationEnabled: mapValueOfType<bool>(json, r'hashVerificationEnabled')!,
         template: mapValueOfType<String>(json, r'template')!,
+        timezone: mapValueOfType<String>(json, r'timezone')!,
       );
     }
     return null;
@@ -110,6 +117,7 @@ class SystemConfigStorageTemplateDto {
     'enabled',
     'hashVerificationEnabled',
     'template',
+    'timezone',
   };
 }
 
