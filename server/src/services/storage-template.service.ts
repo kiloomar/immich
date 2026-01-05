@@ -397,15 +397,6 @@ export class StorageTemplateService extends BaseService {
     const zone = isEmpty(storageTemplate.timezone) ? asset.timeZone || systemTimeZone : storageTemplate.timezone;
     const dt = DateTime.fromJSDate(asset.fileCreatedAt, { zone });
 
-    console.log('=================== Storage Template Debug ==================');
-    console.log('isEmpty(storageTemplate.timezone):', isEmpty(storageTemplate.timezone));
-    console.log('storageTemplate.timezone:', storageTemplate.timezone);
-    console.log('systemTimeZone:', systemTimeZone);
-    console.log('asset.timeZone:', asset.timeZone);
-    console.log('dt.zoneName:', dt.zoneName);
-
-    console.log('asset data', asset);
-
     for (const token of Object.values(storageTokens).flat()) {
       substitutions[token] = dt.toFormat(token);
       if (albumName) {
@@ -418,7 +409,6 @@ export class StorageTemplateService extends BaseService {
           : '';
       }
     }
-    console.log('substitutions:', template(substitutions).replaceAll(/\/{2,}/gm, '/'));
     return template(substitutions).replaceAll(/\/{2,}/gm, '/');
   }
 }
