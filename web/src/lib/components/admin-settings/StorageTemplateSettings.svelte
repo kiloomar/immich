@@ -39,8 +39,7 @@
   const bubble = createBubbler();
   let templateOptions: SystemConfigTemplateStorageOptionDto | undefined = $state();
   let selectedPreset = $state('');
-  // let selectedTimezone = $state('');
-  const timezones = $state(getTimezones(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")));
+  const timezones = getTimezones(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"));
 
   const getTemplateOptions = async () => {
     templateOptions = await getStorageTemplateOptions();
@@ -71,6 +70,7 @@
       lensModel: 'XF27mm F2.8 R WR',
     };
 
+    const chosenZone = configToEdit.storageTemplate.timezone;
     const dt = luxon.DateTime.fromISO(new Date('2022-02-03T04:56:05.250').toISOString());
     const albumStartTime = luxon.DateTime.fromISO(new Date('2021-12-31T05:32:41.750').toISOString());
     const albumEndTime = luxon.DateTime.fromISO(new Date('2023-05-06T09:15:17.100').toISOString());
@@ -86,7 +86,7 @@
     ];
 
     for (const token of dateTokens) {
-      substitutions[token] = dt.toFormat(token);
+      substitutions[token] = dt.setZone(chosenZone || 'local').toFormat(token);
       substitutions['album-startDate-' + token] = albumStartTime.toFormat(token);
       substitutions['album-endDate-' + token] = albumEndTime.toFormat(token);
     }
@@ -112,9 +112,7 @@
   });
 
   const handleTimezoneSelection = (selection: ComboBoxOption | undefined) => {
-    alert(selection?.value);
-    console.log('Selected timezone:', selection?.value);
-    configToEdit.storageTemplate.timezone = selection?.value ?? configToEdit.storageTemplate.timezone;
+    configToEdit.storageTemplate.timezone = selection?.value ?? '';
   };
 </script>
 
@@ -268,22 +266,10 @@
                   hideLabel
                   label=""
                   onSelect={handleTimezoneSelection}
+                  selectedOption={timezones.find((e) => e.value === configToEdit.storageTemplate.timezone) || undefined}
                   options={timezones}
                   placeholder={$t('search_timezone')}
                 />
-                <!-- <select
-                  class="immich-form-input p-2 mt-2 text-sm rounded-lg bg-slate-200 hover:cursor-pointer dark:bg-gray-600"
-                  disabled={disabled || !configToEdit.storageTemplate.enabled}
-                  name="timezones"
-                  id="timezones-select"
-                  bind:value={selectedTimezone}
-                  onchange={handleTimezoneSelection}
-                >
-                  <option selected value="">Default</option>
-                  {#each templateOptions.timezoneOptions as timezone (timezone)}
-                    <option value={timezone}>{timezone}</option>
-                  {/each}
-                </select> -->
               {/if}
             </div>
 

@@ -375,7 +375,7 @@ export class StorageTemplateService extends BaseService {
     };
   }
 
-  private render(template: HandlebarsTemplateDelegate<any>, options: RenderMetadata) {
+  private async render(template: HandlebarsTemplateDelegate<any>, options: RenderMetadata) {
     const { filename, extension, asset, albumName, albumStartDate, albumEndDate, make, model, lensModel } = options;
     const substitutions: Record<string, string> = {
       filename,
@@ -394,15 +394,17 @@ export class StorageTemplateService extends BaseService {
     const { storageTemplate } = await this.getConfig({ withCache: true });
 
     const systemTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    // const zone = asset.timeZone || systemTimeZone;
     const zone = isEmpty(storageTemplate.timezone) ? asset.timeZone || systemTimeZone : storageTemplate.timezone;
     const dt = DateTime.fromJSDate(asset.fileCreatedAt, { zone });
 
     console.log('=================== Storage Template Debug ==================');
+    console.log('isEmpty(storageTemplate.timezone):', isEmpty(storageTemplate.timezone));
     console.log('storageTemplate.timezone:', storageTemplate.timezone);
     console.log('systemTimeZone:', systemTimeZone);
     console.log('asset.timeZone:', asset.timeZone);
     console.log('dt.zoneName:', dt.zoneName);
+
+    console.log('asset data', asset);
 
     for (const token of Object.values(storageTokens).flat()) {
       substitutions[token] = dt.toFormat(token);
