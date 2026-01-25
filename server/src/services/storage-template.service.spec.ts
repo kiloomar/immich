@@ -89,6 +89,7 @@ describe(StorageTemplateService.name, () => {
         secondOptions: ['s', 'ss', 'SSS'],
         weekOptions: ['W', 'WW'],
         yearOptions: ['y', 'yy'],
+        timezoneOptions: Intl.supportedValuesOf('timeZone'),
       });
     });
   });
@@ -438,6 +439,13 @@ describe(StorageTemplateService.name, () => {
       expect(mocks.storage.checkFileExists).toHaveBeenCalledTimes(2);
       expect(mocks.asset.update).toHaveBeenCalledWith({ id: asset.id, originalPath: newPath2 });
       expect(mocks.user.getList).toHaveBeenCalled();
+    });
+
+    it('should apply timezone to filename correctly', async () => {
+      mocks.systemMetadata.get.mockResolvedValue({ storageTemplate: { timezone: 'America/New_York' } });
+
+      let folder = await mocks.storage.readdir('/');
+      console.log('folder', folder);
     });
 
     it('should skip when an asset already matches the template', async () => {

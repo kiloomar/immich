@@ -161,6 +161,7 @@ const updatedConfig = Object.freeze<SystemConfig>({
     enabled: false,
     hashVerificationEnabled: true,
     template: '{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}',
+    timezone: '',
   },
   image: {
     thumbnail: {

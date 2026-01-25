@@ -29,7 +29,7 @@ export const schema: DatabaseSchema = {
           isArray: false,
           primary: false,
           synchronize: true,
-          default: "'2023-01-01T00:00:00.000Z'",
+          default: `'${date.toISOString()}'`,
         },
       ],
       indexes: [],

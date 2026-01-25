@@ -94,9 +94,9 @@ describe(BackupService.name, () => {
       //`immich-db-backup-${DateTime.now().toFormat("yyyyLLdd'T'HHmmss")}-v${serverVersion.toString()}-pg${databaseVersion.split(' ')[0]}.sql.gz.tmp`,
       mocks.storage.readdir.mockResolvedValue([
         'immich-db-backup-123.sql.gz.tmp',
-        `immich-db-backup-${DateTime.fromISO('2025-07-25T11:02:16Z').toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz.tmp`,
-        `immich-db-backup-${DateTime.fromISO('2025-07-27T11:01:16Z').toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz`,
-        `immich-db-backup-${DateTime.fromISO('2025-07-29T11:01:16Z').toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz.tmp`,
+        `immich-db-backup-${DateTime.fromISO('2025-07-25T11:02:16Z', { zone: 'UTC' }).toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz.tmp`,
+        `immich-db-backup-${DateTime.fromISO('2025-07-27T11:01:16Z', { zone: 'UTC' }).toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz`,
+        `immich-db-backup-${DateTime.fromISO('2025-07-29T11:01:16Z', { zone: 'UTC' }).toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz.tmp`,
       ]);
       await sut.cleanupDatabaseBackups();
       expect(mocks.storage.unlink).toHaveBeenCalledTimes(3);
@@ -124,10 +124,10 @@ describe(BackupService.name, () => {
     it('should remove old backup files over keepLastAmount and failed backups', async () => {
       mocks.systemMetadata.get.mockResolvedValue(systemConfigStub.backupEnabled);
       mocks.storage.readdir.mockResolvedValue([
-        `immich-db-backup-${DateTime.fromISO('2025-07-25T11:02:16Z').toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz.tmp`,
-        `immich-db-backup-${DateTime.fromISO('2025-07-27T11:01:16Z').toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz`,
+        `immich-db-backup-${DateTime.fromISO('2025-07-25T11:02:16Z', { zone: 'UTC' }).toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz.tmp`,
+        `immich-db-backup-${DateTime.fromISO('2025-07-27T11:01:16Z', { zone: 'UTC' }).toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz`,
         'immich-db-backup-1753789649000.sql.gz',
-        `immich-db-backup-${DateTime.fromISO('2025-07-29T11:01:16Z').toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz`,
+        `immich-db-backup-${DateTime.fromISO('2025-07-29T11:01:16Z', { zone: 'UTC' }).toFormat("yyyyLLdd'T'HHmmss")}-v1.234.5-pg14.5.sql.gz`,
       ]);
       await sut.cleanupDatabaseBackups();
       expect(mocks.storage.unlink).toHaveBeenCalledTimes(3);

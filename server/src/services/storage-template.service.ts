@@ -385,7 +385,7 @@ export class StorageTemplateService extends BaseService {
   }
 
   private async render(template: HandlebarsTemplateDelegate<any>, options: RenderMetadata) {
-    const { filename, extension, asset, albumName, albumStartDate, albumEndDate } = options;
+    const { filename, extension, asset, albumName, albumStartDate, albumEndDate, make, model, lensModel } = options;
     const substitutions: Record<string, string> = {
       filename,
       ext: extension,
