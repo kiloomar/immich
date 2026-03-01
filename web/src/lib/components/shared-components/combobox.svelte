@@ -265,7 +265,7 @@
     },
   ]}
 >
-  <div>
+  <div class="relative">
     {#if isActive}
       <div class="absolute inset-y-0 start-0 flex items-center ps-3">
         <div class="dark:text-immich-dark-fg/75">
@@ -360,7 +360,7 @@
     role="listbox"
     id={listboxId}
     in:fly={{ duration: 250 }}
-    class="fixed z-1 text-start text-sm w-full overflow-y-auto bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-900"
+    class="static z-1 text-start text-sm w-full overflow-y-auto bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-900"
     class:rounded-b-xl={dropdownDirection === 'bottom'}
     class:rounded-t-xl={dropdownDirection === 'top'}
     class:shadow={dropdownDirection === 'bottom'}

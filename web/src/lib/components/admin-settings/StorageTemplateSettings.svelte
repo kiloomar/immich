@@ -1,6 +1,8 @@
 <script lang="ts">
   import SupportedDatetimePanel from '$lib/components/admin-settings/SupportedDatetimePanel.svelte';
   import SupportedVariablesPanel from '$lib/components/admin-settings/SupportedVariablesPanel.svelte';
+  import type { ComboBoxOption } from '$lib/components/shared-components/combobox.svelte';
+  import Combobox from '$lib/components/shared-components/combobox.svelte';
   import SettingButtonsRow from '$lib/components/shared-components/settings/SystemConfigButtonRow.svelte';
   import SettingInputField from '$lib/components/shared-components/settings/setting-input-field.svelte';
   import SettingSwitch from '$lib/components/shared-components/settings/setting-switch.svelte';
@@ -8,6 +10,7 @@
   import FormatMessage from '$lib/elements/FormatMessage.svelte';
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
   import { systemConfigManager } from '$lib/managers/system-config-manager.svelte';
+  import { getTimezones } from '$lib/modals/timezone-utils';
   import { Route } from '$lib/route';
   import { handleSystemConfigSave } from '$lib/services/system-config.service';
   import { user } from '$lib/stores/user.store';
@@ -15,6 +18,7 @@
   import { Heading, LoadingSpinner, Text } from '@immich/ui';
   import handlebar from 'handlebars';
   import * as luxon from 'luxon';
+  import { DateTime } from 'luxon';
   import { onDestroy } from 'svelte';
   import { t } from 'svelte-i18n';
   import { createBubbler, preventDefault } from 'svelte/legacy';
@@ -35,6 +39,7 @@
   const bubble = createBubbler();
   let templateOptions: SystemConfigTemplateStorageOptionDto | undefined = $state();
   let selectedPreset = $state('');
+  const timezones = getTimezones(DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"));
 
   const getTemplateOptions = async () => {
     templateOptions = await getStorageTemplateOptions();
@@ -65,6 +70,7 @@
       lensModel: 'XF27mm F2.8 R WR',
     };
 
+    const chosenZone = configToEdit.storageTemplate.timezone;
     const dt = luxon.DateTime.fromISO(new Date('2022-02-03T04:56:05.250').toISOString());
     const albumStartTime = luxon.DateTime.fromISO(new Date('2021-12-31T05:32:41.750').toISOString());
     const albumEndTime = luxon.DateTime.fromISO(new Date('2023-05-06T09:15:17.100').toISOString());
@@ -80,7 +86,7 @@
     ];
 
     for (const token of dateTokens) {
-      substitutions[token] = dt.toFormat(token);
+      substitutions[token] = dt.setZone(chosenZone || 'local').toFormat(token);
       substitutions['album-startDate-' + token] = albumStartTime.toFormat(token);
       substitutions['album-endDate-' + token] = albumEndTime.toFormat(token);
     }
@@ -104,6 +110,10 @@
       await handleSystemConfigSave({ storageTemplate: configToEdit.storageTemplate });
     }
   });
+
+  const handleTimezoneSelection = (selection: ComboBoxOption | undefined) => {
+    configToEdit.storageTemplate.timezone = selection?.value ?? '';
+  };
 </script>
 
 <section class="dark:text-immich-dark-fg mt-2">
@@ -250,6 +260,22 @@
                   disabled
                 />
               </div>
+            </div>
+
+            <div class="flex flex-col my-2">
+              {#if templateOptions}
+                <label class="font-medium text-primary text-sm" for="timezones-select">
+                  {$t('timezone')}
+                </label>
+                <Combobox
+                  hideLabel
+                  label=""
+                  onSelect={handleTimezoneSelection}
+                  selectedOption={timezones.find((e) => e.value === configToEdit.storageTemplate.timezone) || undefined}
+                  options={timezones}
+                  placeholder={$t('search_timezone')}
+                />
+              {/if}
             </div>
 
             {#if !minified}

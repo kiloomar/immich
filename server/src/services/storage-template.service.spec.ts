@@ -43,17 +43,18 @@ describe(StorageTemplateService.name, () => {
       ).not.toThrow();
     });
 
-    it('should fail for an invalid template', () => {
-      expect(() =>
-        sut.onConfigValidate({
-          newConfig: {
-            storageTemplate: {
-              template: '{{foo}}',
-            },
-          } as SystemConfig,
-          oldConfig: {} as SystemConfig,
-        }),
-      ).toThrow(/Invalid storage template.*/);
+    it('should fail for an invalid template', async () => {
+      await expect(
+        async () =>
+          await sut.onConfigValidate({
+            newConfig: {
+              storageTemplate: {
+                template: '{{foo}}',
+              },
+            } as SystemConfig,
+            oldConfig: {} as SystemConfig,
+          }),
+      ).rejects.toThrow(/Invalid storage template.*/);
     });
   });
 
@@ -533,6 +534,39 @@ describe(StorageTemplateService.name, () => {
       expect(mocks.storage.checkFileExists).toHaveBeenCalledTimes(2);
       expect(mocks.asset.update).toHaveBeenCalledWith({ id: asset.id, originalPath: newPath2 });
       expect(mocks.user.getList).toHaveBeenCalled();
+    });
+
+    it('should apply timezone to filename correctly', async () => {
+      const config = structuredClone(defaults);
+      config.storageTemplate.template = '{{y}}/{{y}}-{{MM}}-{{dd}}/{{HH}}-{{MM}}';
+      config.storageTemplate.timezone = 'Pacific/Midway';
+      config.storageTemplate.enabled = true;
+
+      const user = UserFactory.create();
+      const stillAsset = AssetFactory.from({
+        fileCreatedAt: new Date('2022-02-03T08:02:00Z'),
+      })
+        .owner(user)
+        .exif()
+        .build();
+
+      const assetPath = `/data/library/${stillAsset.ownerId}/2022/2022-02-03/08-02.jpg`;
+      const newAssetPath = `/data/library/${stillAsset.ownerId}/2022/2022-02-02/21-02.jpg`;
+
+      mocks.systemMetadata.get.mockResolvedValue({ storageTemplate: config.storageTemplate });
+      mocks.user.get.mockResolvedValue(user);
+      mocks.assetJob.getForStorageTemplateJob.mockResolvedValue(getForStorageTemplate(stillAsset));
+      mocks.move.create.mockResolvedValueOnce({
+        id: '1234',
+        entityId: stillAsset.id,
+        pathType: AssetPathType.Original,
+        oldPath: assetPath,
+        newPath: newAssetPath,
+      });
+
+      sut.onConfigUpdate({ oldConfig: defaults, newConfig: config });
+      await expect(sut.handleMigrationSingle({ id: stillAsset.id })).resolves.toBe(JobStatus.Success);
+      expect(mocks.asset.update).toHaveBeenCalledWith({ id: stillAsset.id, originalPath: newAssetPath });
     });
 
     it('should skip when an asset already matches the template', async () => {

@@ -586,6 +586,9 @@ class SystemConfigStorageTemplateDto {
   @IsString()
   @ApiProperty({ description: 'Template' })
   template!: string;
+
+  @IsString()
+  timezone!: string;
 }
 
 export class SystemConfigTemplateStorageOptionDto {
@@ -605,6 +608,7 @@ export class SystemConfigTemplateStorageOptionDto {
   secondOptions!: string[];
   @ApiProperty({ description: 'Available preset template options' })
   presetOptions!: string[];
+  timezoneOptions!: string[];
 }
 
 export class SystemConfigThemeDto {

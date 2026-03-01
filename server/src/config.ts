@@ -122,6 +122,7 @@ export type SystemConfig = {
     enabled: boolean;
     hashVerificationEnabled: boolean;
     template: string;
+    timezone: string;
   };
   image: {
     thumbnail: ImageOptions;
@@ -313,6 +314,7 @@ export const defaults = Object.freeze<SystemConfig>({
     enabled: false,
     hashVerificationEnabled: true,
     template: '{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}',
+    timezone: '',
   },
   image: {
     thumbnail: {
